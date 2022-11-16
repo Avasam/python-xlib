@@ -62,7 +62,7 @@ def record_callback(reply):
 
     data = reply.data
     while len(data):
-        event, data = rq.EventField(None).parse_binary_value(data, record_dpy.display, None, None)
+        event, data = rq.EventField("").parse_binary_value(data, record_dpy.display, None, None)
 
         if event.type in [X.KeyPress, X.KeyRelease]:
             pr = event.type == X.KeyPress and "Press" or "Release"

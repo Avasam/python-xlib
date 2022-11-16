@@ -20,25 +20,46 @@
 #    Boston, MA 02111-1307 USA
 
 # Standard modules
+from __future__ import annotations
 import sys
 import traceback
 import struct
 from array import array
-import types
 
 # Python 2/3 compatibility.
-from six import PY3, binary_type, byte2int, indexbytes, iterbytes
+from six import binary_type, byte2int, indexbytes, iterbytes
 
 # Xlib modules
 from .. import X
 from ..support import lock
+from ..display import _BaseDisplay
 
+try:
+    from typing import TYPE_CHECKING, Any, TypeVar, Union, Optional, SupportsInt, overload
+except ImportError:
+    TYPE_CHECKING = False
+if TYPE_CHECKING:
+    from mmap import mmap
+    from collections.abc import Iterable, Sequence, Callable
+    from typing_extensions import TypeAlias, Literal, SupportsIndex, LiteralString
+    from Xlib.error import XError
+    from Xlib.protocol import display
+    from pickle import PickleBuffer
+    from ctypes import _CData
+    from Xlib.ext.xinput import ClassInfoClass
+    from Xlib.display import _ResourceBaseClass
+    _T = TypeVar("_T")
+    _SliceableBuffer: TypeAlias = Union[bytes, bytearray, memoryview, array[Any], mmap]
+    _IntNew: TypeAlias = Union[str, _SliceableBuffer, _CData, PickleBuffer, SupportsInt, SupportsIndex]
+    _ErrorHandler: TypeAlias = Callable[[XError, Optional["Request"]], _T]
 
 def decode_string(bs):
+    # type: (bytes | bytearray) -> str
     return bs.decode('latin1')
 
-if PY3:
+if sys.version_info[0] == 3:
     def encode_array(a):
+        # type: (array[Any] | memoryview) -> bytes
         return a.tobytes()
 else:
     def encode_array(a):
@@ -60,8 +81,8 @@ unsigned_codes = { 1: 'B', 2: 'H', 4: 'L' }
 #
 # Bleah.
 
-array_unsigned_codes = { }
-struct_to_array_codes = { }
+array_unsigned_codes = { }  # type: dict[int, LiteralString]
+struct_to_array_codes = { }  # type: dict[str, LiteralString]
 
 for c in 'bhil':
     size = array(c).itemsize
@@ -110,21 +131,23 @@ class Field(object):
     f.parse_binary_value() instead.  See its documentation string for
     details.
     """
-    name = None
-    default = None
+    name = ""
+    default = None  # type: int | None
+    pack_value = None  # type: Callable[[Any], tuple[Any, int | None, int | None]] | None
 
-    structcode = None
+    structcode = None  # type: str | None
     structvalues = 0
 
-    check_value = None
-    parse_value = None
+    check_value = None  # type: Callable[[Any], Any] | None
+    parse_value = None  # type: Callable[[Any, Any], Any] | None
 
-    keyword_args = 0
+    keyword_args = False
 
     def __init__(self):
         pass
 
     def parse_binary_value(self, data, display, length, format):
+        # type: (_SliceableBuffer, display.Display | None, int, int) -> tuple[Any, _SliceableBuffer]
         """value, remaindata = f.parse_binary_value(data, display, length, format)
 
         Decode a value for this field from the binary string DATA.
@@ -144,6 +167,7 @@ class Field(object):
 
 class Pad(Field):
     def __init__(self, size):
+        # type: (int) -> None
         self.size = size
         self.value = b'\0' * size
         self.structcode = '{0}x'.format(size)
@@ -152,6 +176,7 @@ class Pad(Field):
 
 class ConstantField(Field):
     def __init__(self, value):
+        # type: (int) -> None
         self.value = value
 
 
@@ -183,9 +208,13 @@ class LengthField(Field):
     """
     structcode = 'L'
     structvalues = 1
-    other_fields = None
+    other_fields = None  # type: Sequence[str] | None
+    def parse_binary_value(self, data = None, display = None, length = None, format = None):
+        # type: (object, object, object, object) -> tuple[Any, _SliceableBuffer]
+        return b'', b''
 
     def calc_length(self, length):
+        # type: (int) -> int
         """newlen = lf.calc_length(length)
 
         Return a new length NEWLEN based on the provided LENGTH.
@@ -202,6 +231,7 @@ class RequestLength(TotalLengthField):
     structvalues = 1
 
     def calc_length(self, length):
+        # type: (int) -> int
         return length // 4
 
 class ReplyLength(TotalLengthField):
@@ -209,11 +239,13 @@ class ReplyLength(TotalLengthField):
     structvalues = 1
 
     def calc_length(self, length):
+        # type: (int) -> int
         return (length - 32) // 4
 
 
 class LengthOf(LengthField):
     def __init__(self, name, size):
+        # type: (str | list[str] | tuple[str, ...], int) -> None
         if isinstance(name, (list, tuple)):
             self.name = name[0]
             self.other_fields = name[1:]
@@ -227,12 +259,15 @@ class OddLength(LengthField):
     structvalues = 1
 
     def __init__(self, name):
+        # type: (str) -> None
         self.name = name
 
     def calc_length(self, length):
+        # type: (int) -> int
         return length % 2
 
     def parse_value(self, value, display):
+        # type: (int, object) -> Literal['even', 'odd']
         if value == 0:
             return 'even'
         else:
@@ -250,6 +285,7 @@ class FormatField(Field):
     structvalues = 1
 
     def __init__(self, name, size):
+        # type: (str, int) -> None
         self.name = name
         self.structcode = unsigned_codes[size]
 
@@ -258,9 +294,9 @@ Format = FormatField
 
 class ValueField(Field):
     def __init__(self, name, default = None):
+        # type: (str, int | None) -> None
         self.name = name
         self.default = default
-
 
 class Int8(ValueField):
     structcode = 'b'
@@ -292,16 +328,16 @@ class Resource(Card32):
     class_name = 'resource'
 
     def __init__(self, name, codes = (), default = None):
+        # type: (str, tuple[int, ...], int | None) -> None
         Card32.__init__(self, name, default)
         self.codes = codes
 
-    def check_value(self, value):
-        if hasattr(value, self.cast_function):
-            return getattr(value, self.cast_function)()
-        else:
-            return value
+    def check_value(self, value):  # pyright: ignore[reportIncompatibleVariableOverride]
+        # type: (Callable[[], _T]) -> _T | int
+        return getattr(value, self.cast_function, value)()
 
-    def parse_value(self, value, display):
+    def parse_value(self, value, display):  # pyright: ignore[reportIncompatibleVariableOverride]
+        # type: (int, _BaseDisplay) -> int | _ResourceBaseClass
         # if not display:
         #    return value
         if value in self.codes:
@@ -351,17 +387,20 @@ class Bool(ValueField):
     structcode = 'B'
 
     def check_value(self, value):
+        # type: (object) -> bool
         return not not value
 
 class Set(ValueField):
     structvalues = 1
 
     def __init__(self, name, size, values, default = None):
+        # type: (str, int, Sequence[object], int | None) -> None
         ValueField.__init__(self, name, default)
         self.structcode = unsigned_codes[size]
         self.values = values
 
     def check_value(self, val):
+        # type: (_T) -> _T
         if val not in self.values:
             raise ValueError('field %s: argument %s not in %s'
                              % (self.name, val, self.values))
@@ -370,6 +409,7 @@ class Set(ValueField):
 
 class Gravity(Set):
     def __init__(self, name):
+        # type: (str) -> None
         Set.__init__(self, name, 1, (X.ForgetGravity, X.StaticGravity,
                                     X.NorthWestGravity, X.NorthGravity,
                                     X.NorthEastGravity, X.WestGravity,
@@ -382,6 +422,7 @@ class FixedBinary(ValueField):
     structvalues = 1
 
     def __init__(self, name, size):
+        # type: (str, int) -> None
         ValueField.__init__(self, name)
         self.structcode = '{0}s'.format(size)
 
@@ -389,11 +430,13 @@ class FixedBinary(ValueField):
 class Binary(ValueField):
     structcode = None
 
-    def __init__(self, name, pad = 1):
+    def __init__(self, name, pad = 0):
+        # type: (str, int) -> None
         ValueField.__init__(self, name)
         self.pad = pad
 
-    def pack_value(self, val):
+    def pack_value(self, val):  # pyright: ignore[reportIncompatibleVariableOverride]
+        # type: (bytes | bytearray) -> tuple[bytes | bytearray, int, None]
         val_bytes = val
         slen = len(val_bytes)
 
@@ -401,8 +444,14 @@ class Binary(ValueField):
             return val_bytes + b'\0' * ((4 - slen % 4) % 4), slen, None
         else:
             return val_bytes, slen, None
+    if TYPE_CHECKING:
+        @overload
+        def parse_binary_value(self, data: _T, display: object, length: None, format: object) -> tuple[_T, Literal[b'']]: ...
+        @overload
+        def parse_binary_value(self, data: _SliceableBuffer, display: object, length: int, format: object) -> tuple[_SliceableBuffer, _SliceableBuffer]: ...
 
     def parse_binary_value(self, data, display, length, format):
+        # type: (_SliceableBuffer, object, int, object) -> tuple[_SliceableBuffer, _SliceableBuffer]
         if length is None:
             return data, b''
 
@@ -417,11 +466,13 @@ class Binary(ValueField):
 class String8(ValueField):
     structcode = None
 
-    def __init__(self, name, pad = 1):
+    def __init__(self, name, pad = 0):
+        # type: (str, int) -> None
         ValueField.__init__(self, name)
         self.pad = pad
 
     def pack_value(self, val):
+        # type: (bytes | str) -> tuple[bytes, int, None]
         if isinstance(val, bytes):
             val_bytes = val
         else:
@@ -433,7 +484,14 @@ class String8(ValueField):
         else:
             return val_bytes, slen, None
 
+    if TYPE_CHECKING:
+        @overload
+        def parse_binary_value(self, data: bytes | bytearray, display: object, length: None, format: object) -> tuple[str, Literal[b'']]: ...
+        @overload
+        def parse_binary_value(self, data: _SliceableBuffer, display: object, length: int, format: object) -> tuple[str, _SliceableBuffer]: ...
+
     def parse_binary_value(self, data, display, length, format):
+        # type: (bytes | bytearray, object, int, object) -> tuple[str, bytes | bytearray]
         if length is None:
             return decode_string(data), b''
 
@@ -450,11 +508,13 @@ class String8(ValueField):
 class String16(ValueField):
     structcode = None
 
-    def __init__(self, name, pad = 1):
+    def __init__(self, name: str, pad = 1):
+        # type: (str, int) -> None
         ValueField.__init__(self, name)
         self.pad = pad
 
     def pack_value(self, val):
+        # type: (Sequence[object]) -> tuple[bytes, int, None]
         """Convert 8-byte string into 16-byte list"""
         if isinstance(val, bytes):
             val = list(iterbytes(val))
@@ -469,6 +529,7 @@ class String16(ValueField):
         return struct.pack('>' + 'H' * slen, *val) + pad, slen, None
 
     def parse_binary_value(self, data, display, length, format):
+        # type: (_SliceableBuffer, object, int | Literal['odd', 'even'], object) -> tuple[tuple[Any, ...], _SliceableBuffer]
         if length == 'odd':
             length = len(data) // 2 - 1
         elif length == 'even':
@@ -495,11 +556,13 @@ class List(ValueField):
     structcode = None
 
     def __init__(self, name, type, pad = 1):
+        # type: (str, Struct | ScalarObj | ResourceObj | ClassInfoClass | type[ValueField], int) -> None
         ValueField.__init__(self, name)
         self.type = type
         self.pad = pad
 
     def parse_binary_value(self, data, display, length, format):
+        # type: (_SliceableBuffer, display.Display | None, SupportsIndex | None, object) -> tuple[list[DictWrapper | None], _SliceableBuffer]
         if length is None:
             ret = []
             if self.type.structcode is None:
@@ -526,7 +589,7 @@ class List(ValueField):
                 data = data[pos:]
 
         else:
-            ret = [None] * int(length)
+            ret = [None] * int(length)  # type: list[DictWrapper | None]
 
             if self.type.structcode is None:
                 for i in range(0, length):
@@ -555,7 +618,8 @@ class List(ValueField):
 
         return ret, data
 
-    def pack_value(self, val):
+    def pack_value(self, val):  # pyright: ignore[reportIncompatibleVariableOverride]
+        # type: (Sequence[object] | dict[str, object]) -> tuple[bytes, int, None]
         # Single-char values, we'll assume that means integer lists.
         if self.type.structcode and len(self.type.structcode) == 1:
             if self.type.check_value is not None:
@@ -578,13 +642,16 @@ class List(ValueField):
 
 class FixedList(List):
     def __init__(self, name, size, type, pad = 1):
+        # type: (str, int, Struct | ScalarObj, int) -> None
         List.__init__(self, name, type, pad)
         self.size = size
 
     def parse_binary_value(self, data, display, length, format):
+        # type: (_SliceableBuffer, display.Display | None, object, object) -> tuple[list[DictWrapper | None], _SliceableBuffer]
         return List.parse_binary_value(self, data, display, self.size, format)
 
     def pack_value(self, val):
+        # type: (Sequence[object] | dict[str, object]) -> tuple[bytes, int, None]
         if len(val) != self.size:
             raise BadDataError('length mismatch for FixedList %s' % self.name)
         return List.pack_value(self, val)
@@ -592,21 +659,26 @@ class FixedList(List):
 
 class Object(ValueField):
     def __init__(self, name, type, default = None):
+        # type: (str, Struct, int | None) -> None
         ValueField.__init__(self, name, default)
         self.type = type
         self.structcode = self.type.structcode
         self.structvalues = self.type.structvalues
 
     def parse_binary_value(self, data, display, length, format):
+        # type: (_SliceableBuffer, display.Display | None, object, object) -> tuple[DictWrapper, _SliceableBuffer]
         return self.type.parse_binary(data, display)
 
-    def parse_value(self, val, display):
+    def parse_value(self, val, display):  # pyright: ignore[reportIncompatibleVariableOverride]
+        # type: (_SliceableBuffer, display.Display | None) -> DictWrapper
         return self.type.parse_value(val, display)
 
-    def pack_value(self, val):
+    def pack_value(self, val):  # pyright: ignore[reportIncompatibleVariableOverride]
+        # type: (tuple[object, ...] | dict[str, object] | DictWrapper) -> bytes
         return self.type.pack_value(val)
 
-    def check_value(self, val):
+    def check_value(self, val):  # pyright: ignore[reportIncompatibleVariableOverride]
+        # type: (tuple[_T, ...] | dict[str, _T] | DictWrapper) -> list[_T]
         if isinstance(val, tuple):
             vals = []
             i = 0
@@ -649,15 +721,15 @@ class PropertyData(ValueField):
     structcode = None
 
     def parse_binary_value(self, data, display, length, format):
+        # type: (_SliceableBuffer, object, _IntNew | None, int) -> tuple[tuple[int, _SliceableBuffer] | None, _SliceableBuffer]
         if length is None:
             length = len(data) // (format // 8)
         else:
             length = int(length)
 
-        if format == 0:
-            ret = None
+        ret = None
 
-        elif format == 8:
+        if format == 8:
             ret = (8, data[:length])
             data = data[length + ((4 - length % 4) % 4):]
 
@@ -671,7 +743,8 @@ class PropertyData(ValueField):
 
         return ret, data
 
-    def pack_value(self, value):
+    def pack_value(self, value):  # pyright: ignore[reportIncompatibleVariableOverride]
+        # type: (tuple[int, Sequence[float] | Sequence[str]]) -> tuple[bytes, int, Literal[8, 16, 32]]
         fmt, val = value
 
         if fmt not in (8, 16, 32):
@@ -702,17 +775,19 @@ class PropertyData(ValueField):
 
         return data, dlen, fmt
 
-
 class FixedPropertyData(PropertyData):
     def __init__(self, name, size):
+        # type: (str, int) -> None
         PropertyData.__init__(self, name)
         self.size = size
 
     def parse_binary_value(self, data, display, length, format):
+        # type: (_SliceableBuffer, object, _IntNew | None, int) -> tuple[tuple[int, _SliceableBuffer] | None, _SliceableBuffer]
         return PropertyData.parse_binary_value(self, data, display,
                                                self.size // (format // 8), format)
 
     def pack_value(self, value):
+        # type: (tuple[int, Sequence[float] | Sequence[str]]) -> tuple[bytes, int, Literal[8, 16, 32]]
         data, dlen, fmt = PropertyData.pack_value(self, value)
 
         if len(data) != self.size:
@@ -724,14 +799,15 @@ class FixedPropertyData(PropertyData):
 
 class ValueList(Field):
     structcode = None
-    keyword_args = 1
+    keyword_args = True
     default = 'usekeywords'
 
     def __init__(self, name, mask, pad, *fields):
+        # type: (str, int, int, _HasStructCodeAndName) -> None
         self.name = name
         self.maskcode = '={0}{1}x'.format(unsigned_codes[mask], pad).encode()
         self.maskcodelen = struct.calcsize(self.maskcode)
-        self.fields = []
+        self.fields = []  # type: list[tuple[_HasStructCodeAndName, int]]
 
         flag = 1
         for f in fields:
@@ -740,6 +816,7 @@ class ValueList(Field):
                 flag = flag << 1
 
     def pack_value(self, arg, keys):
+        # type: (str | dict[str, object], dict[str, object]) -> tuple[bytes, None, None]
         mask = 0
         data = b''
 
@@ -760,6 +837,7 @@ class ValueList(Field):
         return struct.pack(self.maskcode, mask) + data, None, None
 
     def parse_binary_value(self, data, display, length, format):
+        # type: (_SliceableBuffer, display.Display | None, object, object) -> tuple[DictWrapper, _SliceableBuffer]
         r = {}
 
         mask = int(struct.unpack(self.maskcode, data[:self.maskcodelen])[0])
@@ -789,6 +867,7 @@ class KeyboardMapping(ValueField):
     structcode = None
 
     def parse_binary_value(self, data, display, length, format):
+        # type: (_SliceableBuffer, object, int | None, int) -> tuple[list[int], _SliceableBuffer]
         if length is None:
             dlen = len(data)
         else:
@@ -803,6 +882,7 @@ class KeyboardMapping(ValueField):
         return ret, data[dlen:]
 
     def pack_value(self, value):
+        # type: (Sequence[Sequence[object]]) -> tuple[bytes, int, int]
         keycodes = 0
         for v in value:
             keycodes = max(keycodes, len(v))
@@ -822,15 +902,17 @@ class ModifierMapping(ValueField):
     structcode = None
 
     def parse_binary_value(self, data, display, length, format):
+        # type: (_SliceableBuffer, object, object, int) -> tuple[list[array[int]], _SliceableBuffer]
         a = array(array_unsigned_codes[1], data[:8 * format])
 
-        ret = []
+        ret = []  # type: list[array[int]]
         for i in range(0, 8):
             ret.append(a[i * format : (i + 1) * format])
 
         return ret, data[8 * format:]
 
     def pack_value(self, value):
+        # type: (Sequence[Sequence[object]] | tuple[Sequence[object], Sequence[object], Sequence[object], Sequence[object], Sequence[object], Sequence[object], Sequence[object], Sequence[object]]) -> tuple[bytes, int, int]
         if len(value) != 8:
             raise BadDataError('ModifierMapping list should have eight elements')
 
@@ -852,18 +934,20 @@ class EventField(ValueField):
     structcode = None
 
     def pack_value(self, value):
+        # type: (Event) -> tuple[_SliceableBuffer, None, None]
         if not isinstance(value, Event):
             raise BadDataError('%s is not an Event for field %s' % (value, self.name))
 
         return value._binary, None, None
 
     def parse_binary_value(self, data, display, length, format):
+        # type: (_SliceableBuffer, display.Display, object, object) -> tuple[Event, _SliceableBuffer]
         from . import event
 
-        estruct = display.event_classes.get(byte2int(data) & 0x7f, event.AnyEvent)
-        if type(estruct) == dict:
+        estruct = display.event_classes.get(byte2int(data) & 0x7f, event.AnyEvent)  # type: dict[int, type[Event]] | type[Event]
+        if isinstance(estruct, dict):
             # this etype refers to a set of sub-events with individual subcodes
-            estruct = estruct[indexbytes(data, 1)]
+            estruct = estruct[indexbytes(data, 1)]  # type: type[Event]
 
         return estruct(display = display, binarydata = data[:32]), data[32:]
 
@@ -889,10 +973,12 @@ class ResourceObj(object):
     structvalues = 1
 
     def __init__(self, class_name):
+        # type: (str) -> None
         self.class_name = class_name
         self.check_value = None
 
     def parse_value(self, value, display):
+        # type: (int, _BaseDisplay) -> int | _ResourceBaseClass
         # if not display:
         #     return value
         c = display.get_resource_class(self.class_name)
@@ -908,9 +994,11 @@ class StrClass(object):
     structcode = None
 
     def pack_value(self, val):
+        # type: (str) -> bytes
         return (chr(len(val)) + val).encode()
 
     def parse_binary(self, data, display):
+        # type: (bytes | bytearray, object) -> tuple[str, _SliceableBuffer]
         slen = byte2int(data) + 1
         return decode_string(data[1:slen]), data[slen:]
 
@@ -938,16 +1026,19 @@ class Struct(object):
     object to make conversion as fast as possible.  They are
     generated the first time the methods are called.
     """
+    name = ""
+    check_value = None  # type: Callable[[Any], Any] | None
+    keyword_args = False
 
     def __init__(self, *fields):
+        # type: (Field) -> None
         self.fields = fields
 
         # Structures for to_binary, parse_value and parse_binary
         self.static_codes = '='
         self.static_values = 0
-        self.static_fields = []
-        self.static_size = None
-        self.var_fields = []
+        self.static_fields = []  # type: list[Field]
+        self.var_fields = []  # type: list[Field]
 
         for f in self.fields:
             # Append structcode if there is one and we haven't
@@ -981,6 +1072,7 @@ class Struct(object):
     # object
 
     def to_binary(self, *varargs, **keys):
+        # type: (object, object) -> bytes
         """data = s.to_binary(...)
 
         Convert Python values into the binary representation.  The
@@ -1015,8 +1107,11 @@ class Struct(object):
         formats = {}
 
         for f in self.var_fields:
+            if not f.pack_value:
+                continue
+
             if f.keyword_args:
-                v, l, fm = f.pack_value(field_args[f.name], keys)
+                v, l, fm = f.pack_value(field_args[f.name], keys)  # ValueList
             else:
                 v, l, fm = f.pack_value(field_args[f.name])
             var_vals[f.name] = v
@@ -1072,6 +1167,7 @@ class Struct(object):
 
 
     def pack_value(self, value):
+        # type: (tuple[object, ...] | dict[str, object] | DictWrapper) -> bytes
 
         """ This function allows Struct objects to be used in List and
         Object fields.  Each item represents the arguments to pass to
@@ -1079,7 +1175,7 @@ class Struct(object):
 
         """
 
-        if type(value) is tuple:
+        if isinstance(value, tuple):
             return self.to_binary(*value)
         elif isinstance(value, dict):
             return self.to_binary(**value)
@@ -1088,8 +1184,19 @@ class Struct(object):
         else:
             raise BadDataError('%s is not a tuple or a list' % (value))
 
+    if TYPE_CHECKING:
+        # Structs generate their attributes
+        # TODO: Complete all classes inheriting from Struct
+        # and create a type-only class for all direct instances
+        def __getattr__(self, __name: str) -> Any: ...
 
-    def parse_value(self, val, display, rawdict = 0):
+        @overload
+        def parse_value(self, val: _SliceableBuffer, display: display.Display | None, rawdict: Literal[True]) -> dict[str, Any]: ...
+        @overload
+        def parse_value(self, val: _SliceableBuffer, display: display.Display | None, rawdict: Literal[False] = ...) -> DictWrapper:...
+
+    def parse_value(self, val, display, rawdict = False):
+        # type: (_SliceableBuffer, display.Display | None, bool) -> dict[str, Any] | DictWrapper
 
         """This function is used by List and Object fields to convert
         Struct objects with no var_fields into Python values.
@@ -1132,9 +1239,15 @@ class Struct(object):
             return DictWrapper(ret)
         return ret
 
-    def parse_binary(self, data, display, rawdict = 0):
+    if TYPE_CHECKING:
+        @overload
+        def parse_binary(self, data: _SliceableBuffer, display: display.Display | None, rawdict: Literal[True]) -> tuple[dict[str, Any], _SliceableBuffer]: ...
+        @overload
+        def parse_binary(self, data: _SliceableBuffer, display: display.Display | None, rawdict: Literal[False] = ...) -> tuple[DictWrapper , _SliceableBuffer]:...
+    def parse_binary(self, data, display, rawdict = False):
+        # type: (_SliceableBuffer, display.Display | None, bool) -> tuple[DictWrapper | dict[str, Any], _SliceableBuffer]
 
-        """values, remdata = s.parse_binary(data, display, rawdict = 0)
+        """values, remdata = s.parse_binary(data, display, rawdict = False)
 
         Convert a binary representation of the structure into Python values.
 
@@ -1153,8 +1266,8 @@ class Struct(object):
         """
         ret = {}
         val = struct.unpack(self.static_codes, data[:self.static_size])
-        lengths = {}
-        formats = {}
+        lengths = {}  # type: dict[str, int]
+        formats = {}  # type: dict[str, int]
 
         vno = 0
         for f in self.static_fields:
@@ -1201,8 +1314,8 @@ class Struct(object):
 
         for f in self.var_fields:
             ret[f.name], data = f.parse_binary_value(data, display,
-                                                     lengths.get(f.name),
-                                                     formats.get(f.name),
+                                                     lengths.get(f.name, 0),
+                                                     formats.get(f.name, 0),
                                                     )
 
         if not rawdict:
@@ -1215,13 +1328,14 @@ class TextElements8(ValueField):
                               Int8('delta'),
                               String8('string', pad = 0) )
 
-    def pack_value(self, value):
+    def pack_value(self, value):  # pyright: ignore[reportIncompatibleVariableOverride]
+        # type: (Iterable[Field | str | bytes | tuple[Sequence[object], ...] | dict[str, Sequence[object]] | DictWrapper]) -> tuple[bytes, None, None]
         data = b''
         args = {}
 
         for v in value:
             # Let values be simple strings, meaning a delta of 0
-            if type(v) in (str, bytes):
+            if isinstance(v, (str, bytes)):
                 v = (0, v)
 
             # A tuple, it should be (delta, string)
@@ -1257,7 +1371,9 @@ class TextElements8(ValueField):
         return data + b'\0' * ((4 - dlen % 4) % 4), None, None
 
     def parse_binary_value(self, data, display, length, format):
-        values = []
+        # type: (_SliceableBuffer, display.Display | None, object, object) -> tuple[list[DictWrapper], Literal[b'']]
+
+        values = [] # type: list[DictWrapper]
         while 1:
             if len(data) < 2:
                 break
@@ -1273,10 +1389,10 @@ class TextElements8(ValueField):
 
             # string with delta
             else:
-                v, data = self.string_textitem.parse_binary(data, display)
+                v, _ = self.string_textitem.parse_binary(data, display)
                 values.append(v)
 
-        return values, ''
+        return values, b''
 
 
 
@@ -1288,7 +1404,11 @@ class TextElements16(TextElements8):
 
 
 class GetAttrData(object):
+    _data = {} # type: dict[str, object]
+    # GetAttrData classes get their attributes dynamically
+    # TODO: Complete all classes inheriting from GetAttrData
     def __getattr__(self, attr):
+        # type: (str) -> Any
         try:
             if self._data:
                 return self._data[attr]
@@ -1296,24 +1416,32 @@ class GetAttrData(object):
                 raise AttributeError(attr)
         except KeyError:
             raise AttributeError(attr)
+    if TYPE_CHECKING:
+        def __setattr__(self, __name: str, __value: Any) -> None: ...
 
 class DictWrapper(GetAttrData):
     def __init__(self, dict):
+        # type: (dict[str, object]) -> None
         self.__dict__['_data'] = dict
 
     def __getitem__(self, key):
+        # type: (str) -> object
         return self._data[key]
 
     def __setitem__(self, key, value):
+        # type: (str, object) -> None
         self._data[key] = value
 
     def __delitem__(self, key):
+        # type: (str) -> None
         del self._data[key]
 
     def __setattr__(self, key, value):
+        # type: (str, object) -> None
         self._data[key] = value
 
     def __delattr__(self, key):
+        # type: (str) -> None
         del self._data[key]
 
     def __str__(self):
@@ -1323,18 +1451,21 @@ class DictWrapper(GetAttrData):
         return '%s(%s)' % (self.__class__.__name__, repr(self._data))
 
     def __lt__(self, other):
+        # type: (object) -> bool
         if isinstance(other, DictWrapper):
             return self._data < other._data
         else:
             return self._data < other
 
     def __gt__(self, other):
+        # type: (object) -> bool
         if isinstance(other, DictWrapper):
             return self._data > other._data
         else:
             return self._data > other
 
     def __eq__(self, other):
+        # type: (object) -> bool
         if isinstance(other, DictWrapper):
             return self._data == other._data
         else:
@@ -1342,7 +1473,9 @@ class DictWrapper(GetAttrData):
 
 
 class Request(object):
+    _request = None  # type: Struct
     def __init__(self, display, onerror = None, *args, **keys):
+        # type: (_BaseDisplay, _ErrorHandler[object] | None, object, object) -> None
         self._errorhandler = onerror
         self._binary = self._request.to_binary(*args, **keys)
         self._serial = None
@@ -1355,16 +1488,18 @@ class Request(object):
             return 0
 
 class ReplyRequest(GetAttrData):
-    def __init__(self, display, defer = 0, *args, **keys):
+    _request = None  # type: Struct
+    def __init__(self, display, defer = False, *args, **keys):
+        # type: (display.Display, bool, object, object) -> None
         self._display = display
         self._binary = self._request.to_binary(*args, **keys)
-        self._serial = None
-        self._data = None
+        self._serial = None  # type: int | None
+        self._data = {}
         self._error = None
 
         self._response_lock = lock.allocate_lock()
 
-        self._display.send_request(self, 1)
+        self._display.send_request(self, True)
         if not defer:
             self.reply()
 
@@ -1372,9 +1507,11 @@ class ReplyRequest(GetAttrData):
         # Send request and wait for reply if we hasn't
         # already got one.  This means that reply() can safely
         # be called more than one time.
+        if self._display is None:
+            raise TypeError
 
         self._response_lock.acquire()
-        while self._data is None and self._error is None:
+        while not self._data and self._error is None:
             self._display.send_recv_lock.acquire()
             self._response_lock.release()
 
@@ -1390,7 +1527,7 @@ class ReplyRequest(GetAttrData):
 
     def _parse_response(self, data):
         self._response_lock.acquire()
-        self._data, d = self._reply.parse_binary(data, self._display, rawdict = 1)
+        self._data, d = self._reply.parse_binary(data, self._display, rawdict = True)
         self._response_lock.release()
 
     def _set_error(self, error):
@@ -1404,12 +1541,14 @@ class ReplyRequest(GetAttrData):
 
 
 class Event(GetAttrData):
+    _fields = None # type: Struct
     def __init__(self, binarydata = None, display = None,
                  **keys):
+        # type: (_SliceableBuffer | None, display.Display | None, object) -> None
         if binarydata:
             self._binary = binarydata
             self._data, data = self._fields.parse_binary(binarydata, display,
-                                                         rawdict = 1)
+                                                         rawdict = True)
             # split event type into type and send_event bit
             self._data['send_event'] = not not self._data['type'] & 0x80
             self._data['type'] = self._data['type'] & 0x7f
@@ -1437,18 +1576,21 @@ class Event(GetAttrData):
         return '%s(%s)' % (self.__class__.__name__, kws)
 
     def __lt__(self, other):
+        # type: (object) -> bool
         if isinstance(other, Event):
             return self._data < other._data
         else:
             return self._data < other
 
     def __gt__(self, other):
+        # type: (object) -> bool
         if isinstance(other, Event):
             return self._data > other._data
         else:
             return self._data > other
 
     def __eq__(self, other):
+        # type: (object) -> bool
         if isinstance(other, Event):
             return self._data == other._data
         else:
@@ -1456,9 +1598,14 @@ class Event(GetAttrData):
 
 
 def call_error_handler(handler, error, request):
+    # type: (_ErrorHandler[_T], XError, Request | None) -> _T | Literal[0]
     try:
         return handler(error, request)
     except:
         sys.stderr.write('Exception raised by error handler.\n')
         traceback.print_exc()
         return 0
+
+if TYPE_CHECKING:
+    # What about StrClass, Mask, RawField, SizeOf, FP1616 and FP3232 ?
+    _HasStructCodeAndName: TypeAlias = Union[Pad, Opcode, ReplyCode, LengthField, FormatField, Int8, Int16, Int32, Card8, Card16, Card32, Bool, Set, FixedBinary]

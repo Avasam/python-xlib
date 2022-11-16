@@ -26,6 +26,7 @@ from .. import X
 # Xlib.protocol modules
 from . import rq
 from . import structs
+from . import display
 
 
 class CreateWindow(rq.Request):
@@ -785,9 +786,10 @@ class ListFontsWithInfo(rq.ReplyRequest):
 
     # Bastards.
 
-    def __init__(self, *args, **keys):
+    def __init__(self, display, defer = False, *args, **keys):
+        # type: (display.Display, bool, object, object) -> None
         self._fonts = []
-        rq.ReplyRequest.__init__(self, *args, **keys)
+        rq.ReplyRequest.__init__(self, display, defer, *args, **keys)
 
     def _parse_response(self, data):
 

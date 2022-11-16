@@ -21,6 +21,8 @@
 #    Suite 330,
 #    Boston, MA 02111-1307 USA
 
+from __future__ import annotations
+
 # Standard modules
 import errno
 import math
@@ -28,9 +30,10 @@ import select
 import socket
 import struct
 import sys
+from typing import Literal
 
 # Python 2/3 compatibility.
-from six import PY3, byte2int, indexbytes
+from six import byte2int, indexbytes
 
 # Xlib modules
 from .. import error
@@ -42,11 +45,28 @@ from ..support import lock, connect
 from . import rq
 from . import event
 
-if PY3:
+try:
+    from typing import TYPE_CHECKING, overload, Union, Any, Optional, TypeVar
+except ImportError:
+    TYPE_CHECKING = False
+if TYPE_CHECKING:
+    from typing_extensions import TypeAlias
+    from array import array
+    from mmap import mmap
+    from collections.abc import Callable
+    from Xlib.display import _resource_baseclasses, _ResourceBaseClass
+    from Xlib.xobject import cursor, colormap, fontable, drawable, resource
+    _T = TypeVar("_T")
+    _BaseClasses = type(_resource_baseclasses)
+    _SliceableBuffer: TypeAlias = Union[bytes, bytearray, memoryview, array[Any], mmap]
+    _ErrorHandler: TypeAlias = Callable[[error.XError, Optional[rq.Request]], _T]
+
+if sys.version_info[0] == 3:
 
     class bytesview(object):
 
         def __init__(self, data, offset=0, size=None):
+            # type: (_SliceableBuffer | bytesview, int, int | None) -> None
             if size is None:
                 size = len(data)-offset
             if isinstance(data, bytes):
@@ -55,12 +75,21 @@ if PY3:
                 view = data.view
             else:
                 raise TypeError('unsupported type: {}'.format(type(data)))
-            self.view = view[offset:offset+size]
+            self.view = view[offset:offset+size]  # type: memoryview
 
         def __len__(self):
             return len(self.view)
 
+        if TYPE_CHECKING:
+            def __contains__(self, other: object) -> bool: ...
+
+            @overload
+            def __getitem__(self, key: int) -> int: ...
+            @overload
+            def __getitem__(self, key: slice) -> bytes: ...
+
         def __getitem__(self, key):
+            # type: (slice | int) -> bytes | int
             if isinstance(key, slice):
                 return bytes(self.view[key])
             return self.view[key]
@@ -76,11 +105,13 @@ else:
 
 
 class Display(object):
-    extension_major_opcodes = {}
-    error_classes = error.xerror_class.copy()
-    event_classes = event.event_class.copy()
+    extension_major_opcodes = {}  # type: dict[str, int]
+    error_classes = error.xerror_class.copy() # type: dict[int, type[error.XError]]
+    event_classes = event.event_class.copy()  # type: dict[int, type[rq.Event] | dict[int, type[rq.Event]]]
+    resource_classes = {}  # type: _BaseClasses
 
     def __init__(self, display = None):
+        # type: (str | None) -> None
         name, protocol, host, displayno, screenno = connect.get_display(display)
 
         self.display_name = name
@@ -97,17 +128,17 @@ class Display(object):
         # Socket error indicator, set when the socket is closed
         # in one way or another
         self.socket_error_lock = lock.allocate_lock()
-        self.socket_error = None
+        self.socket_error = None  # type: Exception | None
 
         # Event queue
         self.event_queue_read_lock = lock.allocate_lock()
         self.event_queue_write_lock = lock.allocate_lock()
-        self.event_queue = []
+        self.event_queue = []  # type: list[rq.Event]
 
         # Unsent request queue and sequence number counter
         self.request_queue_lock = lock.allocate_lock()
         self.request_serial = 1
-        self.request_queue = []
+        self.request_queue = []  # type: list[tuple[rq.Request | rq.ReplyRequest | ConnectionSetupRequest, bool]]
 
         # Send-and-receive loop, see function send_and_receive
         # for a detailed explanation
@@ -127,26 +158,26 @@ class Display(object):
         self.recv_buffer_size = int(buffer_size)
 
         # Data used by the send-and-receive loop
-        self.sent_requests = []
+        self.sent_requests = []  # type: list[rq.Request | rq.ReplyRequest | ConnectionSetupRequest]
         self.recv_packet_len = 0
         self.data_send = b''
-        self.data_recv = b''
+        self.data_recv = b'' # type: bytes | bytesview
         self.data_sent_bytes = 0
 
         # Resource ID structures
         self.resource_id_lock = lock.allocate_lock()
-        self.resource_ids = {}
+        self.resource_ids = {}  # type: dict[int, None]
         self.last_resource_id = 0
 
         # Use an default error handler, one which just prints the error
-        self.error_handler = None
+        self.error_handler = None  # type: _ErrorHandler[object] | None
 
 
         # Right, now we're all set up for the connection setup
         # request with the server.
 
         # Figure out which endianness the hardware uses
-        self.big_endian = struct.unpack('BB', struct.pack('H', 0x0100))[0]
+        self.big_endian = struct.unpack('BB', struct.pack('H', 0x0100))[0]  # type: bool
 
         if self.big_endian:
             order = 0x42
@@ -214,7 +245,7 @@ class Display(object):
 
             # Call send_and_recv, which will return when
             # something has occured
-            self.send_and_recv(event = 1)
+            self.send_and_recv(event = True)
 
             # Before looping around, lock the event queue against
             # modifications.
@@ -240,7 +271,7 @@ class Display(object):
 
         # Make a send_and_recv pass, receiving any events
         self.send_recv_lock.acquire()
-        self.send_and_recv(recv = 1)
+        self.send_and_recv(recv = True)
 
         # Lock the queue, get the event count, and unlock again.
         self.event_queue_write_lock.acquire()
@@ -252,17 +283,19 @@ class Display(object):
     def flush(self):
         self.check_for_error()
         self.send_recv_lock.acquire()
-        self.send_and_recv(flush = 1)
+        self.send_and_recv(flush = True)
 
     def close(self):
         self.flush()
         self.close_internal('client')
 
     def set_error_handler(self, handler):
+        # type: (_ErrorHandler[object] | None) -> None
         self.error_handler = handler
 
 
     def allocate_resource_id(self):
+        # type: () -> int
         """id = d.allocate_resource_id()
 
         Allocate a new X resource id number ID.
@@ -287,6 +320,7 @@ class Display(object):
             self.resource_id_lock.release()
 
     def free_resource_id(self, rid):
+        # type: (int) -> None
         """d.free_resource_id(rid)
 
         Free resource id RID.  Attempts to free a resource id which
@@ -309,8 +343,32 @@ class Display(object):
             self.resource_id_lock.release()
 
 
+    if TYPE_CHECKING:
+        @overload
+        def get_resource_class(self, class_name: Literal['resource'], default: object = ...) -> type[resource.Resource]: ...
+        @overload
+        def get_resource_class(self, class_name: Literal['drawable'], default: object = ...) -> type[drawable.Drawable]: ...
+        @overload
+        def get_resource_class(self, class_name: Literal['window'], default: object = ...) -> type[drawable.Window]: ...
+        @overload
+        def get_resource_class(self, class_name: Literal['pixmap'], default: object = ...) -> type[drawable.Pixmap]: ...
+        @overload
+        def get_resource_class(self, class_name: Literal['fontable'], default: object = ...) -> type[fontable.Fontable]: ...
+        @overload
+        def get_resource_class(self, class_name: Literal['font'], default: object = ...) -> type[fontable.Font]: ...
+        @overload
+        def get_resource_class(self, class_name: Literal['gc'], default: object = ...) -> type[fontable.GC]: ...
+        @overload
+        def get_resource_class(self, class_name: Literal['colormap'], default: object = ...) -> type[colormap.Colormap]: ...
+        @overload
+        def get_resource_class(self, class_name: Literal['cursor'], default: object) -> type[cursor.Cursor]: ...
+        @overload
+        def get_resource_class(self, class_name: str, default: _T) -> type[_ResourceBaseClass] | _T: ...
+        @overload
+        def get_resource_class(self, class_name: str, default: None = ...) -> type[_ResourceBaseClass] | None: ...
 
     def get_resource_class(self, class_name, default = None):
+        # type: (str, _T | None) -> _T | None
         """class = d.get_resource_class(class_name, default = None)
 
         Return the class to be used for X resource objects of type
@@ -320,21 +378,25 @@ class Display(object):
         return self.resource_classes.get(class_name, default)
 
     def set_extension_major(self, extname, major):
+        # type: (str, int) -> None
         self.extension_major_opcodes[extname] = major
 
     def get_extension_major(self, extname):
+        # type: (str) -> int
         return self.extension_major_opcodes[extname]
 
     def add_extension_event(self, code, evt, subcode=None):
-       if subcode == None:
-           self.event_classes[code] = evt
-       else:
-           if not code in self.event_classes:
-               self.event_classes[code] = {subcode: evt}
-           else:
-               self.event_classes[code][subcode] = evt
+        # type: (int, type[rq.Event], int | None) -> None
+        if subcode is None:
+            self.event_classes[code] = evt
+        else:
+            if not code in self.event_classes:
+                self.event_classes[code] = {subcode: evt}
+            else:
+                self.event_classes[code][subcode] = evt
 
     def add_extension_error(self, code, err):
+        # type: (int, type[error.XError]) -> None
         self.error_classes[code] = err
 
 
@@ -351,6 +413,7 @@ class Display(object):
             raise err
 
     def send_request(self, request, wait_for_response):
+        # type: (rq.Request | rq.ReplyRequest | ConnectionSetupRequest, bool) -> None
         if self.socket_error:
             raise self.socket_error
 
@@ -368,12 +431,13 @@ class Display(object):
 #           self.flush()
 
     def close_internal(self, whom):
+        # type: (object) -> None
         # Clear out data structures
-        self.request_queue = None
-        self.sent_requests = None
-        self.event_queue = None
-        self.data_send = None
-        self.data_recv = None
+        self.request_queue = []
+        self.sent_requests = []
+        self.event_queue = []
+        self.data_send = b''
+        self.data_recv = b''
 
         # Close the connection
         self.socket.close()
@@ -384,7 +448,8 @@ class Display(object):
         self.socket_error_lock.release()
 
 
-    def send_and_recv(self, flush = None, event = None, request = None, recv = None):
+    def send_and_recv(self, flush = False, event = False, request = None, recv = False):
+        # type: (bool, bool, int | None, bool) -> None
         """send_and_recv(flush = None, event = None, request = None, recv = None)
 
         Perform I/O, or wait for some other thread to do it for us.
@@ -583,7 +648,7 @@ class Display(object):
                     i = self.socket.send(self.data_send)
                 except socket.error as err:
                     self.close_internal('server: %s' % err)
-                    raise self.socket_error
+                    raise self.socket_error or Exception()
 
                 self.data_send = self.data_send[i:]
                 self.data_sent_bytes = self.data_sent_bytes + i
@@ -601,12 +666,12 @@ class Display(object):
                         bytes_recv = self.socket.recv(count)
                     except socket.error as err:
                         self.close_internal('server: %s' % err)
-                        raise self.socket_error
+                        raise self.socket_error or Exception()
 
                     if not bytes_recv:
                         # Clear up, set a connection closed indicator and raise it
                         self.close_internal('server')
-                        raise self.socket_error
+                        raise self.socket_error or Exception()
 
                     self.data_recv = bytes(self.data_recv) + bytes_recv
                     gotreq = self.parse_response(request)
@@ -675,6 +740,7 @@ class Display(object):
 
 
     def parse_response(self, request):
+        # type: (int) -> bool
         """Internal method.
 
         Parse data received from server.  If REQUEST is not None
@@ -689,8 +755,9 @@ class Display(object):
             return self.parse_connection_setup()
 
         # Parse ordinary server response
-        gotreq = 0
-        while 1:
+        gotreq = False
+        rtype = None
+        while True:
             if self.data_recv:
                 # Check the first byte to find out what kind of response it is
                 rtype = byte2int(self.data_recv)
@@ -699,11 +766,10 @@ class Display(object):
             if self.recv_packet_len:
                 if len(self.data_recv) < self.recv_packet_len:
                     return gotreq
-
                 if rtype == 1:
                     gotreq = self.parse_request_response(request) or gotreq
                     continue
-                elif rtype & 0x7f == ge.GenericEventCode:
+                elif rtype and (rtype & 0x7f == ge.GenericEventCode):
                     self.parse_event_response(rtype)
                     continue
                 else:
@@ -711,7 +777,7 @@ class Display(object):
 
             # Every response is at least 32 bytes long, so don't bother
             # until we have received that much
-            if len(self.data_recv) < 32:
+            if len(self.data_recv) < 32 or rtype is None:
                 return gotreq
 
             # Error response
@@ -719,7 +785,7 @@ class Display(object):
                 gotreq = self.parse_error_response(request) or gotreq
 
             # Request response or generic event.
-            elif rtype == 1 or rtype & 0x7f == ge.GenericEventCode:
+            elif rtype and rtype == 1 or rtype and (rtype & 0x7f == ge.GenericEventCode):
                 # Set reply length, and loop around to see if
                 # we have got the full response
                 rlen = int(struct.unpack('=L', self.data_recv[4:8])[0])
@@ -731,7 +797,9 @@ class Display(object):
 
 
     def parse_error_response(self, request):
+        # type: (int) -> bool
         # Code is second byte
+
         code = indexbytes(self.data_recv, 1)
 
         # Fetch error class
@@ -772,14 +840,16 @@ class Display(object):
             else:
                 self.default_error_handler(e)
 
-            return 0
+            return False
 
 
     def default_error_handler(self, err):
+        # type: (object) -> None
         sys.stderr.write('X protocol error:\n%s\n' % err)
 
 
     def parse_request_response(self, request):
+        # type: (int) -> bool
         req = self.get_waiting_replyrequest()
 
         # Sequence number is always data[2:4]
@@ -811,20 +881,22 @@ class Display(object):
 
 
     def parse_event_response(self, etype):
+        # type: (int) -> None
         # Skip bit 8, that is set if this event came from an SendEvent
-        etype = etype & 0x7f
+        etype = etype and (etype & 0x7f)
+        is_generic_event_code = etype == ge.GenericEventCode
 
-        if etype == ge.GenericEventCode:
+        if is_generic_event_code:
             length = self.recv_packet_len
         else:
             length = 32
 
         estruct = self.event_classes.get(etype, event.AnyEvent)
-        if type(estruct) == dict:
+        if isinstance(estruct, dict):
             subcode = self.data_recv[1]
 
             # Python2 compatibility
-            if type(subcode) == str:
+            if isinstance(subcode, str):
                 subcode = ord(subcode)
 
             # this etype refers to a set of sub-events with individual subcodes
@@ -832,7 +904,7 @@ class Display(object):
 
         e = estruct(display = self, binarydata = self.data_recv[:length])
 
-        if etype == ge.GenericEventCode:
+        if is_generic_event_code:
             self.recv_packet_len = 0
 
         self.data_recv = bytesview(self.data_recv, length)
@@ -866,6 +938,7 @@ class Display(object):
 
 
     def get_waiting_request(self, sno):
+        # type: (int) -> rq.ReplyRequest | ConnectionSetupRequest | None
         if not self.sent_requests:
             return None
 
@@ -937,7 +1010,7 @@ class Display(object):
         # Only the ConnectionSetupRequest has been sent so far
         r = self.sent_requests[0]
 
-        while 1:
+        while True:
             # print 'data_send:', repr(self.data_send)
             # print 'data_recv:', repr(self.data_recv)
 
@@ -946,7 +1019,7 @@ class Display(object):
 
                 # The full response haven't arrived yet
                 if len(self.data_recv) < alen:
-                    return 0
+                    return False
 
                 # Connection failed or further authentication is needed.
                 # Set reason to the reason string
@@ -956,22 +1029,22 @@ class Display(object):
                 # Else connection succeeded, parse the reply
                 else:
                     x, d = r._success_reply.parse_binary(self.data_recv[:alen],
-                                                         self, rawdict = 1)
+                                                         self, rawdict = True)
                     r._data.update(x)
 
                 del self.sent_requests[0]
 
                 self.data_recv = self.data_recv[alen:]
 
-                return 1
+                return True
 
             else:
                 # The base reply is 8 bytes long
                 if len(self.data_recv) < 8:
-                    return 0
+                    return False
 
                 r._data, d = r._reply.parse_binary(self.data_recv[:8],
-                                                   self, rawdict = 1)
+                                                   self, rawdict = True)
                 self.data_recv = self.data_recv[8:]
 
                 # Loop around to see if we have got the additional data
@@ -1022,6 +1095,7 @@ Screen = rq.Struct( rq.Window('root'),
 
 
 class ConnectionSetupRequest(rq.GetAttrData):
+    _serial = None  # type: int | None
     _request = rq.Struct( rq.Set('byte_order', 1, (0x42, 0x6c)),
                           rq.Pad(1),
                           rq.Card16('protocol_major'),
@@ -1060,13 +1134,14 @@ class ConnectionSetupRequest(rq.GetAttrData):
 
 
     def __init__(self, display, *args, **keys):
+        # type: (Display, object, object) -> None
         self._binary = self._request.to_binary(*args, **keys)
-        self._data = None
+        self._data = {}
 
         # Don't bother about locking, since no other threads have
         # access to the display yet
 
-        display.request_queue.append((self, 1))
+        display.request_queue.append((self, True))
 
         # However, we must lock send_and_recv, but we don't have
         # to loop.

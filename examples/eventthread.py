@@ -34,7 +34,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import time
 from threading import Thread
 
-from Xlib import Xatom, threaded
+from Xlib import Xatom
 from Xlib.display import Display
 
 

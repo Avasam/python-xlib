@@ -34,6 +34,22 @@ from six import integer_types
 from Xlib.protocol import rq
 from Xlib import X
 
+try:
+    from typing import TYPE_CHECKING, Union, Any, SupportsFloat, TypeVar
+except ImportError:
+    TYPE_CHECKING = False
+if TYPE_CHECKING:
+    from Xlib.display import Display
+    from Xlib.protocol import display
+    from Xlib.protocol import request
+    from collections.abc import Sequence, Iterable
+    from Xlib.xobject import drawable, resource
+    from mmap import mmap
+    from typing_extensions import TypeAlias, SupportsIndex
+    from _typeshed import ReadableBuffer
+    _T = TypeVar("_T")
+    _SliceableBuffer: TypeAlias = Union[bytes, bytearray, memoryview, array.array[Any], mmap]
+    _Floatable: TypeAlias = Union[SupportsFloat, SupportsIndex, str, ReadableBuffer]
 
 extname = 'XInputExtension'
 
@@ -163,9 +179,11 @@ PROPERTY_TYPE_FLOAT = 'FLOAT'
 class FP1616(rq.Int32):
 
     def check_value(self, value):
+        # type: (float) -> int
         return int(value * 65536.0)
 
     def parse_value(self, value, display):
+        # type: (_Floatable, object) -> float
         return float(value) / float(1 << 16)
 
 class FP3232(rq.ValueField):
@@ -173,9 +191,11 @@ class FP3232(rq.ValueField):
     structvalues = 2
 
     def check_value(self, value):
+        # type: (_T) -> _T
         return value
 
     def parse_value(self, value, display):
+        # type: (tuple[_Floatable, _Floatable], object) -> float
         integral, frac = value
         ret = float(integral)
         # optimised math.ldexp(float(frac), -32)
@@ -202,6 +222,7 @@ class XIQueryVersion(rq.ReplyRequest):
 
 
 def query_version(self):
+    # type: (Display | resource.Resource) -> XIQueryVersion
     return XIQueryVersion(
         display=self.display,
         opcode=self.display.get_extension_major(extname),
@@ -212,11 +233,13 @@ def query_version(self):
 class Mask(rq.List):
 
     def __init__(self, name):
+        # type: (str) -> None
         rq.List.__init__(self, name, rq.Card32, pad=0)
 
     def pack_value(self, val):
+        # type: (int | Iterable[int]) -> tuple[bytes, int, None]
 
-        mask_seq = array.array(rq.struct_to_array_codes['L'])
+        mask_seq = array.array(rq.struct_to_array_codes['L'])  # type: array.array[int]
 
         if isinstance(val, integer_types):
             # We need to build a "binary mask" that (as far as I can tell) is
@@ -226,8 +249,9 @@ class Mask(rq.List):
             # bytes we build a longer array, being careful to maintain native
             # byte order across the entire set of values.
             if sys.byteorder == 'little':
-                def fun(val):
-                    mask_seq.insert(0, val)
+                def fun(__v):
+                    # type: (int) -> None
+                    mask_seq.insert(0, __v)
             elif sys.byteorder == 'big':
                 fun = mask_seq.append
             else:
@@ -259,6 +283,7 @@ class XISelectEvents(rq.Request):
     )
 
 def select_events(self, event_masks):
+    # type: (drawable.Window, Sequence[tuple[int, Sequence[int]]]) -> XISelectEvents
     '''
     select_events(event_masks)
 
@@ -284,6 +309,7 @@ AnyInfo = rq.Struct(
 class ButtonMask(object):
 
     def __init__(self, value, length):
+        # type: (int, int) -> None
         self._value = value
         self._length = length
 
@@ -291,6 +317,7 @@ class ButtonMask(object):
         return self._length
 
     def __getitem__(self, key):
+        # type: (int) -> int
         return self._value & (1 << key)
 
     def __str__(self):
@@ -305,9 +332,11 @@ class ButtonState(rq.ValueField):
     structcode = None
 
     def __init__(self, name):
+        # type: (str) -> None
         rq.ValueField.__init__(self, name)
 
     def parse_binary_value(self, data, display, length, fmt):
+        # type: (_SliceableBuffer, object, int, object) -> tuple[ButtonMask, _SliceableBuffer]
         # Mask: bitfield of <length> button states.
         mask_len = 4 * ((((length + 7) >> 3) + 3) >> 2)
         mask_data = data[:mask_len]
@@ -378,10 +407,11 @@ INFO_CLASSES = {
 }
 
 class ClassInfoClass(object):
-
+    check_value = None
     structcode = None
 
     def parse_binary(self, data, display):
+        # type: (_SliceableBuffer, display.Display | None) -> tuple[rq.DictWrapper, _SliceableBuffer]
         class_type, length = struct.unpack('=HH', data[:4])
         class_struct = INFO_CLASSES.get(class_type, AnyInfo)
         class_data, _ = class_struct.parse_binary(data, display)
@@ -422,6 +452,7 @@ class XIQueryDevice(rq.ReplyRequest):
         )
 
 def query_device(self, deviceid):
+    # type: (Display | resource.Resource, int) -> XIQueryDevice
     return XIQueryDevice(
         display=self.display,
         opcode=self.display.get_extension_major(extname),
@@ -448,6 +479,7 @@ class XIListProperties(rq.ReplyRequest):
     )
 
 def list_device_properties(self, deviceid):
+    # type: (Display | resource.Resource, int) -> XIListProperties
     return XIListProperties(
         display=self.display,
         opcode=self.display.get_extension_major(extname),
@@ -481,7 +513,8 @@ class XIGetProperty(rq.ReplyRequest):
         rq.PropertyData('value')
     )
 
-def get_device_property(self, deviceid, property, type, offset, length, delete=False):
+def get_device_property(self, deviceid, property, type, offset, length, delete=0):
+    # type: (Display | resource.Resource, int, int, int, int, int, int) -> XIGetProperty
     return XIGetProperty(
         display=self.display,
         opcode=self.display.get_extension_major(extname),
@@ -508,14 +541,15 @@ class XIChangeProperty(rq.Request):
     )
 
 def change_device_property(self, deviceid, property, type, mode, value):
+    # type: (Display | resource.Resource, int, int, int, int, Sequence[float] | Sequence[str]) -> XIChangeProperty
     return XIChangeProperty(
-        display=self.display,
-        opcode=self.display.get_extension_major(extname),
-        deviceid=deviceid,
-        property=property,
-        type=type,
-        mode=mode,
-        value=value,
+        display = self.display,
+        opcode = self.display.get_extension_major(extname),
+        deviceid = deviceid,
+        property = property,
+        type = type,
+        mode = mode,
+        value = value,
     )
 
 class XIDeleteProperty(rq.Request):
@@ -529,6 +563,7 @@ class XIDeleteProperty(rq.Request):
     )
 
 def delete_device_property(self, deviceid, property):
+    # type: (Display | resource.Resource, int, int) -> XIDeleteProperty
     return XIDeleteProperty(
         display=self.display,
         opcode=self.display.get_extension_major(extname),
@@ -563,6 +598,7 @@ class XIGrabDevice(rq.ReplyRequest):
         )
 
 def grab_device(self, deviceid, time, grab_mode, paired_device_mode, owner_events, event_mask):
+    # type: (drawable.Window, int, int, int, int, bool, Sequence[int]) -> XIGrabDevice
     return XIGrabDevice(
         display=self.display,
         opcode=self.display.get_extension_major(extname),
@@ -587,6 +623,7 @@ class XIUngrabDevice(rq.Request):
     )
 
 def ungrab_device(self, deviceid, time):
+    # type: (Display | resource.Resource, int, int) -> XIUngrabDevice
     return XIUngrabDevice(
         display=self.display,
         opcode=self.display.get_extension_major(extname),
@@ -629,6 +666,7 @@ class XIPassiveGrabDevice(rq.ReplyRequest):
 def passive_grab_device(self, deviceid, time, detail,
                         grab_type, grab_mode, paired_device_mode,
                         owner_events, event_mask, modifiers):
+    # type: (drawable.Window, int, int, int, int, int, int, bool, Sequence[int], Sequence[int]) -> XIPassiveGrabDevice
     return XIPassiveGrabDevice(
         display=self.display,
         opcode=self.display.get_extension_major(extname),
@@ -648,6 +686,7 @@ def passive_grab_device(self, deviceid, time, detail,
 def grab_keycode(self, deviceid, time, keycode,
                  grab_mode, paired_device_mode,
                  owner_events, event_mask, modifiers):
+    # type: (drawable.Window, int, int, int, int, int, bool, Sequence[int], Sequence[int]) -> XIPassiveGrabDevice
     return passive_grab_device(self, deviceid, time, keycode,
                                GrabtypeKeycode,
                                grab_mode, paired_device_mode,
@@ -671,6 +710,7 @@ class XIPassiveUngrabDevice(rq.Request):
     )
 
 def passive_ungrab_device(self, deviceid, detail, grab_type, modifiers):
+    # type: (drawable.Window, int, int, int, Sequence[int]) -> XIPassiveUngrabDevice
     return XIPassiveUngrabDevice(
         display=self.display,
         opcode=self.display.get_extension_major(extname),
@@ -682,6 +722,7 @@ def passive_ungrab_device(self, deviceid, detail, grab_type, modifiers):
         )
 
 def ungrab_keycode(self, deviceid, keycode, modifiers):
+    # type: (drawable.Window, int, int, Sequence[int]) -> XIPassiveUngrabDevice
     return passive_ungrab_device(self, deviceid, keycode,
                                  GrabtypeKeycode, modifiers)
 
@@ -758,6 +799,7 @@ PropertyEventData = rq.Struct(
 )
 
 def init(disp, info):
+    # type: (Display, request.QueryExtension) -> None
     disp.extension_add_method('display', 'xinput_query_version', query_version)
     disp.extension_add_method('window', 'xinput_select_events', select_events)
     disp.extension_add_method('display', 'xinput_query_device', query_device)

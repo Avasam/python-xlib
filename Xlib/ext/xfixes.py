@@ -25,8 +25,11 @@ A partial implementation of the XFIXES extension.  Only the HideCursor and
 ShowCursor requests and SelectionNotify events are provided.
 '''
 
-from Xlib import X
-from Xlib.protocol import rq, structs
+from Xlib.protocol import rq
+from Xlib.display import Display
+from Xlib.protocol import request
+from Xlib.xobject import resource, drawable
+
 
 extname = 'XFIXES'
 
@@ -61,6 +64,7 @@ class QueryVersion(rq.ReplyRequest):
 
 
 def query_version(self):
+    # type: (Display | resource.Resource) -> QueryVersion
     return QueryVersion(display=self.display,
                         opcode=self.display.get_extension_major(extname),
                         major_version=4,
@@ -75,6 +79,7 @@ class HideCursor(rq.Request):
                          )
 
 def hide_cursor(self):
+    # type: (drawable.Window) -> None
     HideCursor(display=self.display,
                opcode=self.display.get_extension_major(extname),
                window=self)
@@ -89,6 +94,7 @@ class ShowCursor(rq.Request):
 
 
 def show_cursor(self):
+    # type: (drawable.Window) -> None
     ShowCursor(display=self.display,
                opcode=self.display.get_extension_major(extname),
                window=self)
@@ -103,6 +109,7 @@ class SelectSelectionInput(rq.Request):
                          )
 
 def select_selection_input(self, window, selection, mask):
+    # type: (Display | resource.Resource, int, int, int) -> SelectSelectionInput
     return SelectSelectionInput(opcode=self.display.get_extension_major(extname),
                                 display=self.display,
                                 window=window,
@@ -144,6 +151,7 @@ class SelectCursorInput(rq.Request):
                          )
 
 def select_cursor_input(self, window, mask):
+    # type: (Display | resource.Resource, int, int) -> SelectCursorInput
     return SelectCursorInput(opcode=self.display.get_extension_major(extname),
                              display=self.display,
                              window=window,
@@ -172,6 +180,7 @@ class GetCursorImage(rq.ReplyRequest):
                        )
 
 def get_cursor_image(self, window):
+    # type: (Display | resource.Resource, object) -> GetCursorImage
     return GetCursorImage(opcode=self.display.get_extension_major(extname),
                           display=self.display,
                          )
@@ -188,6 +197,7 @@ class DisplayCursorNotify(rq.Event):
 
 
 def init(disp, info):
+    # type: (Display, request.QueryExtension) -> None
     disp.extension_add_method('display', 'xfixes_select_selection_input', select_selection_input)
     disp.extension_add_method('display', 'xfixes_query_version', query_version)
     disp.extension_add_method('window', 'xfixes_hide_cursor', hide_cursor)

@@ -33,7 +33,7 @@ import sys
 import os
 
 # Python 2/3 compatibility.
-from six import PY2, MAXSIZE
+from six import MAXSIZE
 
 # Change path so we find Xlib
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -43,7 +43,7 @@ from Xlib import display, error
 from optparse import OptionParser
 
 
-if PY2:
+if sys.version_info[0] == 2:
     integer_type = long
 else:
     integer_type = int

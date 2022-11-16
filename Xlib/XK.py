@@ -22,10 +22,13 @@
 # This module defines some functions for working with X keysyms as well
 # as a modular keysym definition and loading mechanism. See the keysym
 # definition modules in the Xlib/keysymdef directory.
+from __future__ import annotations
 
 from Xlib.X import NoSymbol
+from Xlib.keysymdef.miscellany import XK_BackSpace, XK_Clear, XK_Delete, XK_Escape, XK_Pause, XK_Return, XK_Scroll_Lock, XK_Tab
 
 def string_to_keysym(keysym):
+    # type: (str) -> int
     '''Return the (16 bit) numeric code of keysym.
 
     Given the name of a keysym as a string, return its numeric code.
@@ -34,6 +37,7 @@ def string_to_keysym(keysym):
     return globals().get('XK_' + keysym, NoSymbol)
 
 def load_keysym_group(group):
+    # type: (str) -> None
     '''Load all the keysyms in group.
 
     Given a group name such as 'latin1' or 'katakana' load the keysyms
@@ -68,6 +72,7 @@ load_keysym_group('latin1')
 
 
 def keysym_to_string(keysym):
+    # type: (int) -> str | None
     '''Translate a keysym (16 bit number) into a python string.
 
     This will pass 0 to 0xff as well as XK_BackSpace, XK_Tab, XK_Clear,

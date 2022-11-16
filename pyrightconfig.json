@@ -1,0 +1,40 @@
+{
+  // "pythonVersion": "3.3",
+  "useLibraryCodeForTypes": true,
+  "extraPaths": [
+    "src/"
+  ],
+  "typeCheckingMode": "strict",
+  // Extra strict. Optional options even in "strict" mode.
+  "reportPropertyTypeMismatch": "error",
+  //
+  // False positives with TYPE_CHECKING and defered imports
+  "reportImportCycles": "information",
+  // FIXME: They are all missing
+  "reportUnsupportedDunderAll": "none",
+  // As a library, we're allowed to use our own privates
+  "reportPrivateUsage": "none",
+  // Some private classes are reused in private modules
+  "reportUnusedClass": "none",
+  // Keeping unused functions and variables for easier reference
+  "reportUnusedVariable": "none",
+  "reportUnusedFunction": "none",
+  // We actively use type comments to support python 2
+  "reportTypeCommentUsage": "none",
+  // We're constantly "redefining" `TYPE_CHECKING` and other variables for cross-version support
+  "reportConstantRedefinition": "none",
+  //
+  // External libraries may have missing or incomplete stubs
+  "reportMissingTypeStubs": "information",
+  "reportUnknownVariableType": "information",
+  "reportUnknownMemberType": "information",
+  "reportUnknownArgumentType": "information",
+  // We also only care about exposed methods and variables
+  "reportUninitializedInstanceVariable": "warning",
+  "reportMissingParameterType": "warning",
+  "reportUnknownParameterType": "warning",
+  // Supporting common misused parameters from users that don't type-check is ok
+  "reportUnnecessaryIsInstance": "information",
+  "reportUnnecessaryComparison": "warning",
+  "reportUnnecessaryContains": "warning"
+}
