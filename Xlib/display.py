@@ -22,9 +22,6 @@
 # Python modules
 import types
 
-# Python 2/3 compatibility.
-from six import create_unbound_method
-
 # Xlib modules
 from . import ext
 from . import X
@@ -282,7 +279,7 @@ class Display(object):
                 if hasattr(cls, name):
                     raise AssertionError('attempting to replace %s method: %s' % (class_name, name))
 
-                method = create_unbound_method(function, cls)
+                method = function
 
                 # Maybe should check extension overrides too
                 try:
