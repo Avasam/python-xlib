@@ -1,7 +1,7 @@
 The Python X Library (Avasam's fork)
 ====================================
 
-|Build Status| |codecov.io|
+|Build Status|
 
 `Homepage`_ | `Releases`_ | `Changelog`_ | `Upstream`_
 
@@ -167,6 +167,3 @@ ordered by importance.
 .. |Build Status| image::
    https://github.com/Avasam/python-xlib/actions/workflows/ci.yml/badge.svg
    :target: https://github.com/Avasam/python-xlib/actions/workflows/ci.yml
-.. |codecov.io| image::
-   https://codecov.io/github/Avasam/python-xlib/graph/badge.svg
-   :target: https://codecov.io/github/Avasam/python-xlib

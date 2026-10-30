@@ -10,4 +10,5 @@ apk add --no-cache xvfb
 
 pip install --require-hashes -r "$1"
 python -W all -m coverage run -m unittest -v
-coverage xml
+coverage report > coverage.txt
+coverage html
