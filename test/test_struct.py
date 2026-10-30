@@ -193,3 +193,27 @@ _struct_test('fixed binary', (
     # Make sure fixed binary fields are handled as static fields.
     ('c8', rq.Card8, 0x42, partial(pack, 'B')),
 ))
+
+
+class TestStr(TestCase):
+    """ rq.Str packs a single byte length followed by the encoded string. """
+
+    def test_pack_value(self):
+        for value, binary in (
+            ('', b'\x00'),
+            ('fixed', b'\x05fixed'),
+            (b'fixed', b'\x05fixed'),
+            # The length counts encoded bytes, not characters.
+            ('caf\xe9', b'\x05caf\xc3\xa9'),
+            ('x' * 255, b'\xff' + b'x' * 255),
+        ):
+            self.assertBinaryEqual(rq.Str.pack_value(value), binary)
+
+    def test_pack_value_too_long(self):
+        with self.assertRaises(ValueError):
+            rq.Str.pack_value('x' * 256)
+
+    def test_parse_binary(self):
+        value, remain = rq.Str.parse_binary(b'\x05fixed!', dummy_display)
+        self.assertEqual(value, 'fixed')
+        self.assertEqual(remain, b'!')

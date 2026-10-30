@@ -897,7 +897,12 @@ class StrClass(object):
     structcode = None
 
     def pack_value(self, val):
-        return (chr(len(val)) + val).encode()
+        if isinstance(val, bytes):
+            val_bytes = val
+        else:
+            val_bytes = val.encode()
+        # The length prefix is a single byte, bytes() rejects anything over 255
+        return bytes((len(val_bytes),)) + val_bytes
 
     def parse_binary(self, data, display):
         slen = data[0] + 1
