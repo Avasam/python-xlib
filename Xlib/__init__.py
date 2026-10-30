@@ -21,11 +21,35 @@
 
 from . import XK, X, Xatom, Xcursorfont, Xutil, display, error, rdb
 
-__version__ = (0, 33)
 
-__version_extra__ = ''
 
-__version_string__ = '.'.join(map(str, __version__)) + __version_extra__
+def _get_version_string():
+    # The version is only declared in pyproject.toml, so read it from the installed metadata.
+    import sys
+    if sys.version_info >= (3, 8):
+        from importlib.metadata import PackageNotFoundError, version
+    else:
+        try:
+            # Backport, only a dependency on Python 3.6 and 3.7
+            from importlib_metadata import PackageNotFoundError, version  # type: ignore[import-not-found]
+        except ImportError:
+            return '0+unknown'
+    try:
+        return version('python-xlib')
+    except PackageNotFoundError:
+        # Running from an uninstalled source tree
+        return '0+unknown'
+
+
+def _split_version(version_string):
+    import re
+    release = re.match(r'\d+(\.\d+)*', version_string).group()
+    return tuple(map(int, release.split('.'))), version_string[len(release):]
+
+
+__version_string__ = _get_version_string()
+
+__version__, __version_extra__ = _split_version(__version_string__)
 
 __all__ = [
     'X',

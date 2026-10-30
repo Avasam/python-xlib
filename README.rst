@@ -24,8 +24,7 @@ GPL v2.
 Requirements
 ~~~~~~~~~~~~
 
-The Python X Library requires Python 3.3 or newer. It is tested with
-Python 3.3 through 3.15.
+The Python X Library requires Python 3.3 or newer.
 
 The Python X Library will only work on systems that have an X server installed,
 such as most Linux distros, but will not work on Windows or MacOS.
@@ -40,7 +39,7 @@ To install the Python Xlib, run this command:
     pip install python-xlib
 
 To install from a source checkout, run ``pip install .`` instead.
-Building from source needs Python 3.9 or newer.
+Building from source needs Python 3.8 or newer.
 
 Alternatively, you can run programs from the distribution directory, or
 change the module path in programs.

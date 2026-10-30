@@ -1,11 +1,11 @@
 [build-system]
-# `six` is needed because the version is read by importing `Xlib`.
-requires = ["setuptools>=77", "setuptools-scm", "six>=1.10.0"]
-build-backend = "setuptools.build_meta"
+requires = ["uv_build>=0.13.5,<0.14"]
+build-backend = "uv_build"
 
 [project]
 name = "python-xlib"
-dynamic = ["version"]
+# `Xlib.__version__` reads this from the installed metadata.
+version = "0.33"
 description = "Python X Library"
 readme = "README.rst"
 license = "LGPL-2.1-or-later"
@@ -19,26 +19,16 @@ classifiers = [
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.3",
-  "Programming Language :: Python :: 3.4",
-  "Programming Language :: Python :: 3.5",
-  "Programming Language :: Python :: 3.6",
-  "Programming Language :: Python :: 3.7",
-  "Programming Language :: Python :: 3.8",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
-  "Programming Language :: Python :: 3.14",
-  "Programming Language :: Python :: 3.15",
   "Programming Language :: Python :: Implementation :: CPython",
   "Topic :: Software Development :: Libraries :: Python Modules",
   "Topic :: Software Development :: Libraries",
   "Topic :: Software Development :: User Interfaces",
 ]
 requires-python = ">=3.3"
-dependencies = ["six>=1.10.0"]
+dependencies = [
+  "importlib-metadata; python_version >= '3.6' and python_version < '3.8'",
+  "six>=1.10.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/python-xlib/python-xlib"
@@ -52,21 +42,14 @@ dev = [
   "coverage; python_version >= '3.5'",
 ]
 
-[tool.setuptools]
-packages = [
-  "Xlib",
-  "Xlib.ext",
-  "Xlib.keysymdef",
-  "Xlib.protocol",
-  "Xlib.support",
-  "Xlib.xobject",
-]
-
-[tool.setuptools.dynamic]
-version = { attr = "Xlib.__version_string__" }
-
 [tool.uv]
 exclude-newer = "1 week"
-# Tests run against the source tree. Building the project needs setuptools>=77,
-# which needs Python>=3.9, so it is not installed into the test environments.
+# Tests run against the source tree. Building the project needs uv_build,
+# which needs Python>=3.8, so it is not installed into the test environments.
 package = false
+
+[tool.uv.build-backend]
+module-name = "Xlib"
+module-root = ""
+source-include = ["test/*.py"]
+wheel-exclude = ["ChangeLog"]
