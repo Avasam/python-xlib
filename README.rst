@@ -24,8 +24,8 @@ GPL v2.
 Requirements
 ~~~~~~~~~~~~
 
-The Python X Library requires Python 2.7 or newer. It has been tested to
-various extents with Python 2.7 and 3.3 through 3.6.
+The Python X Library requires Python 3.3 or newer. It is tested with
+Python 3.3 through 3.15.
 
 The Python X Library will only work on systems that have an X server installed,
 such as most Linux distros, but will not work on Windows or MacOS.
@@ -33,14 +33,14 @@ such as most Linux distros, but will not work on Windows or MacOS.
 Installation
 ~~~~~~~~~~~~
 
-The Python Xlib uses the standard setuptools package, to install run
-this command:
+To install the Python Xlib, run this command:
 
 ::
 
-    python setup.py install
+    pip install python-xlib
 
-See the command help for details: ``python setup.py install -h``.
+To install from a source checkout, run ``pip install .`` instead.
+Building from source needs Python 3.9 or newer.
 
 Alternatively, you can run programs from the distribution directory, or
 change the module path in programs.
@@ -117,8 +117,8 @@ ordered by importance.
 .. _Contributors: https://github.com/python-xlib/python-xlib/graphs/contributors
 .. _Examples:     https://github.com/python-xlib/python-xlib/tree/master/examples
 
-.. |Build Status| image:: https://travis-ci.org/python-xlib/python-xlib.svg?branch=master
-   :target: https://travis-ci.org/python-xlib/python-xlib
+.. |Build Status| image:: https://github.com/python-xlib/python-xlib/actions/workflows/ci.yml/badge.svg?branch=master
+   :target: https://github.com/python-xlib/python-xlib/actions/workflows/ci.yml
 .. |codecov.io| image:: https://codecov.io/github/python-xlib/python-xlib/coverage.svg?branch=master
    :target: https://codecov.io/github/python-xlib/python-xlib?branch=master
 .. |Code Health| image:: https://landscape.io/github/python-xlib/python-xlib/master/landscape.svg?style=flat

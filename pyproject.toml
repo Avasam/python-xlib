@@ -1,2 +1,72 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+# `six` is needed because the version is read by importing `Xlib`.
+requires = ["setuptools>=77", "setuptools-scm", "six>=1.10.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "python-xlib"
+dynamic = ["version"]
+description = "Python X Library"
+readme = "README.rst"
+license = "LGPL-2.1-or-later"
+license-files = ["LICENSE"]
+authors = [{ name = "Peter Liljenberg", email = "petli@ctrl-c.liu.se" }]
+keywords = ["windows", "x", "x11", "xlib"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Environment :: X11 Applications",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.3",
+  "Programming Language :: Python :: 3.4",
+  "Programming Language :: Python :: 3.5",
+  "Programming Language :: Python :: 3.6",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: Software Development :: Libraries",
+  "Topic :: Software Development :: User Interfaces",
+]
+requires-python = ">=3.3"
+dependencies = ["six>=1.10.0"]
+
+[project.urls]
+Homepage = "https://github.com/python-xlib/python-xlib"
+Download = "https://github.com/python-xlib/python-xlib/releases"
+Changelog = "https://github.com/python-xlib/python-xlib/blob/master/CHANGELOG.md"
+
+[dependency-groups]
+dev = [
+  # uv does not split the lock on versions a release excludes, and coverage 5 dropped 3.3 and 3.4.
+  "coverage<5; python_version < '3.5'",
+  "coverage; python_version >= '3.5'",
+]
+
+[tool.setuptools]
+packages = [
+  "Xlib",
+  "Xlib.ext",
+  "Xlib.keysymdef",
+  "Xlib.protocol",
+  "Xlib.support",
+  "Xlib.xobject",
+]
+
+[tool.setuptools.dynamic]
+version = { attr = "Xlib.__version_string__" }
+
+[tool.uv]
+exclude-newer = "1 week"
+# Tests run against the source tree. Building the project needs setuptools>=77,
+# which needs Python>=3.9, so it is not installed into the test environments.
+package = false

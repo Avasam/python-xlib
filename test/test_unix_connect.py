@@ -5,8 +5,7 @@ from functools import partial
 import socket
 import sys
 import unittest
-
-from mock import patch
+from unittest.mock import patch
 
 from Xlib.support import unix_connect
 from Xlib.error import DisplayConnectionError, DisplayNameError

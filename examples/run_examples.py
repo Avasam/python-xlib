@@ -29,6 +29,8 @@ import os
 import subprocess
 import unittest
 
+from Xlib import display
+
 examples_folder = os.path.abspath(os.path.dirname(__file__)) + "/"
 
 def run_example(path):
@@ -66,6 +68,12 @@ class TestExamples(unittest.TestCase):
 
     def test_security(self):
         """ Run security.py -- demonstrate the SECURITY extension """
+        # Some Xvfb builds, such as Alpine 3.4's, leave the SECURITY extension out.
+        d = display.Display()
+        has_security = d.query_extension('SECURITY') is not None
+        d.close()
+        if not has_security:
+            self.skipTest('X server does not support the SECURITY extension')
         self.assertEqual(run_example(examples_folder + "security.py --generate"), 0)
         self.assertEqual(run_example(examples_folder + "security.py --revoke"), 0)
 
