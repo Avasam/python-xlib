@@ -541,3 +541,165 @@ Version 0.4 - 4 Oct 2000
 - Some documentation has been written.
 
 - The usual bunch of bugfixes.
+
+---
+Historical ChangeLog
+====================
+
+Per-file notes kept between 2000 and 2007, formerly in `Xlib/ChangeLog` and `Xlib/protocol/ChangeLog`. Newest first, paths relative to the repository root.
+
+2007-06-10: Mike Grant <mgg@nobodymuch.org>
+--------------------------------------------
+
+- (many files) (mgg): Converted tabs to spaces throughout the codebase, using `reindent.py` (SF id: 1559082).
+
+2007-03-18: Mike Grant <mgg@nobodymuch.org>
+--------------------------------------------
+
+- `Xlib/display.py` (mgg): Added a `get_atom` alias that uses the internal cache.
+- `Xlib/xobject/drawable.py` (mgg): Added a `raise_window()` alias to the `Window` class.
+
+2007-02-15: Mike Grant <mgg@nobodymuch.org>
+--------------------------------------------
+
+- `Xlib/xauth.py` (mgg): Python 2.5 didn't like the way the buffer type was used, resulting in X authorisation failure, so reverted to using slices.
+
+2006-11-22: Mike Grant <mgg@nobodymuch.org>
+--------------------------------------------
+
+- `Xlib/ext/record.py`: Addition of RECORD extension by Alex Badea <decampos@users.sourceforge.net>, SF patch id: 1538663 (demo program in `examples/record_demo.py`).
+
+2006-09-20: Mike Meyer <mwm@mired.org>
+--------------------------------------
+
+- `Xlib/ext/xinerama.py` (mwm): Addition of Xinerama extension.
+
+2006-07-22: Mike Grant <mgg@nobodymuch.org>
+--------------------------------------------
+
+Various typo fixes, general updates.
+
+- `Xlib/protocol/display.py` (mggrant): Fix for SF bug 1219457: flushing was blocking and waiting for a read operation. Added missing `import socket` per SF bug 681511. Fix for SF bugs 1098695 and 1098738: the `recv` variable was being used for more than one thing, renamed one.
+
+The ChangeLog hadn't been maintained since 2002, but some of the more significant comments from CVS logs follow:
+
+- `Xlib/display.py` (petli): Fix bug in `refresh_keyboard_mapping`: ignore modifier and pointer remappings. Plays nice with pydoc. Copied some text from the docs to `__doc__` strings in `Xlib/display.py` so that they appear when you use pydoc. Completed documentation for `Display` objects.
+- `Xlib/XK.py` (calroc99): Minor doc string changes. Called `load_keysym_group()` for miscellany and latin1 keysyms, rather than importing the modules.
+- `Xlib/keysymdef/*` (calroc99): Small change to keysym loading. Works the same way.
+- `Xlib/support/*`, `Xlib/xauth.py`, `Xlib/error.py` (petli): Added `~/.Xauthority` parsing by Python code instead of relying on `/usr/X11R6/bin/xauth`. Not activated yet in all cases yet? Activated in `unix_support.py`.
+- `Xlib/xobject/drawable.py` (petli): Fix bugs in definition and method of `GrabButton`/`GrabPointer`.
+- `Xlib/protocol/request.py` (petli): Fix bugs in definition and method of `GrabButton`/`GrabPointer`.
+- `Xlib/xobject/icccm.py` (petli): Add `WithdrawnState` to `WMHints`.
+- `doc/*` (petli): Documentation updates, typos and completing documentation for `Display` objects.
+
+2002-03-30: Peter Liljenberg <peter.liljenberg@esdgkonsult.com>
+----------------------------------------------------------------
+
+- `Xlib/support/unix_connect.py`: Handle `fcntl`/`FCNTL` changes in Python 2.2.
+
+2002-03-11: Peter Liljenberg <peter.liljenberg@esdgkonsult.com>
+----------------------------------------------------------------
+
+- `Xlib/xobject/drawable.py` (`Drawable.fill_arc`): This should be a `PolyFillArc`.
+
+2002-02-22: Peter Liljenberg <peter.liljenberg@esdgkonsult.com>
+----------------------------------------------------------------
+
+- `Xlib/protocol/event.py` (`CirculateNotify`, `CirculateRequest`): These are identical, so subclass the common `Circulate`.
+
+2002-02-13: Peter Liljenberg <peter.liljenberg@esdgkonsult.com>
+----------------------------------------------------------------
+
+- `Xlib/protocol/rq.py` (`ValueList.parse_binary_value`): Use `=` both for `calcsize` and unpacking. Caused problems on Alpha.
+
+2002-02-11: Peter Liljenberg <peter.liljenberg@esdgkonsult.com>
+----------------------------------------------------------------
+
+- `Xlib/protocol/request.py`:
+  - (`GetWindowAttributes`): Rename `class` to `win_class`.
+  - (`AllocColorPlanes`): Fix `Pad(4)` to `Pad(8)` in reply.
+- `Xlib/protocol/rq.py` (`ReplyLength`): Add a reply length field, for completeness and easier unit test generation.
+
+2002-02-10: Peter Liljenberg <peter.liljenberg@esdgkonsult.com>
+----------------------------------------------------------------
+
+- `Xlib/protocol/rq.py`:
+  - (`DictWrapper.__cmp__`): Let `DictWrapper` compare with plain dictionaries.
+  - (`Event.__init__`): Set `send_event` to 0 when creating new events objects, and allow events to be compared.
+  - (`Struct.parse_binary`): Allow `LengthField`s to have a `parse_value` method.
+  - (`OddLength.parse_value`): Decode field.
+  - (`String16.parse_binary_value`): Handle `OddLength` fields.
+  - (`TextElements8.parse_binary_value`): Bugfix: return `values` instead of `v`.
+  - (`String8.parse_binary_value`): Parse `String8` with no `LengthOf` field.
+
+2002-02-09: Peter Liljenberg <peter.liljenberg@esdgkonsult.com>
+----------------------------------------------------------------
+
+- `Xlib/protocol/rq.py` (`TextElements16`): Bugfix: inherit `TextElements8` instead of `TextElements16`. Found while preparing unit tests, whee.
+
+2002-01-14: Peter Liljenberg <peter.liljenberg@esdgkonsult.com>
+----------------------------------------------------------------
+
+- `Xlib/protocol/display.py` (`Display.parse_event_response`): Fix bug reported by Ilpo Nyyssönen, whereby `ReplyRequest`s which generate events (e.g. `get_property` with `delete = 1`) will get dropped when the event is received.
+
+2001-12-14: Peter Liljenberg <peter.liljenberg@esdgkonsult.com>
+----------------------------------------------------------------
+
+- `Xlib/protocol/display.py` (`Display.parse_event_response`), `Xlib/protocol/rq.py` (`Event.__init__`): Fixed bug in event type decoding: bit 0-6 is the event type, and bit 7 is set if the event was sent by `SendEvent`.
+
+2001-01-19: Peter Liljenberg <petli@cendio.se>
+----------------------------------------------
+
+- `Xlib/XK.py`: Moved all keysyms into separate modules, based on their category. By default only the miscellany and latin1 keysyms are loaded, and other have to be loaded by importing the `Xlib.keysymdef.<category>` module, or calling `load_keysym_group('category')`.
+- `Xlib/display.py` (`Display.lookup_string`, `Display.rebind_string`): Functions to translate keysyms to strings, and binding keysyms to new strings.
+
+2001-01-16: Peter Liljenberg <petli@cendio.se>
+----------------------------------------------
+
+- `Xlib/xobject/drawable.py` (`Window.send_event`), `Xlib/display.py` (`Display.send_event`): Changed the order of the `event_mask` and `propagate` arguments.
+- `Xlib/protocol/event.py`: Changed some class names so that they correspond exactly to the event type constants.
+
+2001-01-10: Peter Liljenberg <petli@cendio.se>
+----------------------------------------------
+
+- `Xlib/display.py` (`Display._update_keymap`): The first half of the update algorithm operated on an earlier type of code->sym map than the second half. Stupid, stupid. It would have been nice with a type-checker now.
+
+2001-01-09: Peter Liljenberg <petli@cendio.se>
+----------------------------------------------
+
+- `Xlib/display.py` (`Display._update_keymap`): Fixed call to `append` with 1.5.2 semantics, broke in newer Pythons.
+- `Xlib/protocol/display.py` (`Display.send_request`): Fixed a call to `append()` with multiple arguments, something that modern Pythons don't allow.
+
+2001-01-04: Peter Liljenberg <petli@cendio.se>
+----------------------------------------------
+
+- `Xlib/protocol/rq.py`: The fix for 64-bit platforms didn't work, and close scrutiny of `structmodule.c` shows why: it turns out that `=` translates into `<` or `>`, the one the platform would use. This means `B` is one byte, `H` is two and `L` is four, and no extra alignment, always. `@`, which is the default, selects native number of bytes, which on Alpha means that `L` is eight bytes.
+
+  Now the code goes to pains to ensure that `=` encoding is always used, so _now_ it should work on all platforms. Ahem.
+
+2000-12-29: Peter Liljenberg <petli@cendio.se>
+----------------------------------------------
+
+- `Xlib/protocol/rq.py`: Optimizations: replace calls to `Field.get_name()` with access to attribute `name` (`Struct.build_from_args`).
+- `Xlib/protocol/rq.py`: Alpha forces us to probe how many bytes each struct code in `bhil` represents, instead of being able to assume that `b` is 1, `h` is 2 and `l` is 4.
+
+2000-12-22: Peter Liljenberg <petli@cendio.se>
+----------------------------------------------
+
+- `Xlib/display.py` (`Display.keycode_to_keysym`, `Display.keysym_to_keycode`, `Display.keysym_to_keycodes`, `Display.refresh_keyboard_mapping`, `Display._update_keymap`): Added keymap cache implementation.
+
+2000-12-21: Peter Liljenberg <petli@cendio.se>
+----------------------------------------------
+
+- `Xlib/xobject/colormap.py` (`Colormap.alloc_named_color`): Extended to handle `#000000` style color specifications.
+- `Xlib/xobject/drawable.py` (`Window.reparent`): Renamed from `reparent_window`.
+- `Xlib/display.py` (`Display.set_error_handler`): Added.
+- `Xlib/protocol/request.py` (`SetClipRectangles`): Fixed typo (attribute was `rectangels`).
+
+2000-12-20: Peter Liljenberg <petli@cendio.se>
+----------------------------------------------
+
+- `Xlib/display.py` (`_BaseDisplay`): Implement a cache of atom names.
+- `Xlib/protocol/rq.py`:
+  - (`DictWrapper.__setitem__`, `DictWrapper.__delitem__`, `DictWrapper.__setattr__`, `DictWrapper.__delattr__`): Add a few methods to the `DictWrapper`, to make sure that even if attributes are changed, all attributes can be found in the `_data` mapping.
+  - (`ValueField.__init__`, `Object.__init__`, `ValueField.pack_value`, `Set.__init__`): Added a default parameter, so that structure elements with a default value can be omitted when calling `build_from_args`.

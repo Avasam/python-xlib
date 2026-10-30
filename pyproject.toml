@@ -54,4 +54,3 @@ package = false
 module-name = "Xlib"
 module-root = ""
 source-include = ["test/*.py"]
-wheel-exclude = ["ChangeLog"]
