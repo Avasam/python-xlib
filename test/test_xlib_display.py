@@ -22,6 +22,9 @@ class TestXlibDisplay(unittest.TestCase):
         self.dummy_str = "qqq"
         self.keysym = 65535
 
+    def tearDown(self):
+        self.display.close()
+
     def test_display_instance(self):
         self.assertTrue(isinstance(self.display, Xlib.display.Display))
 
@@ -45,14 +48,6 @@ class TestXlibDisplay(unittest.TestCase):
             self.assertEqual(self.display.get_pointer_mapping(), [0] * length)
         finally:
             self.display.set_pointer_mapping(orig_mapping)
-
-    def test_can_close_display(self):
-        self.display.close()
-        self.assertEqual(str(self.display.display.socket_error), "Display connection closed by client")
-
-    def test_can_close_display_and_check_for_error(self):
-        self.display.close()
-        self.assertRaises(Xlib.error.ConnectionClosedError, self.display.flush)
 
     def test_return_fileno(self):
         self.assertTrue(isinstance(self.display.fileno(), int))
@@ -175,6 +170,21 @@ class TestXlibDisplay(unittest.TestCase):
     def test_get_selection_owner(self):
         atom = self.display.get_atom(self.display_num)
         self.assertEqual(self.display.get_selection_owner(atom), 0)
+
+
+class TestXlibDisplayClose(unittest.TestCase):
+    """Tests that close their own display, since closing twice raises."""
+
+    def setUp(self):
+        self.display = Xlib.display.Display(os.getenv("DISPLAY"))
+
+    def test_can_close_display(self):
+        self.display.close()
+        self.assertEqual(str(self.display.display.socket_error), "Display connection closed by client")
+
+    def test_can_close_display_and_check_for_error(self):
+        self.display.close()
+        self.assertRaises(Xlib.error.ConnectionClosedError, self.display.flush)
 
 
 if __name__ == '__main__':
