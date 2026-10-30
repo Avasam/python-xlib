@@ -30,10 +30,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from Xlib import display, X, threaded,Xutil
 import time
 
-try:
-    import thread
-except ModuleNotFoundError:
-    import _thread as thread
+import _thread
 
 from Xlib.ext import damage
 from PIL import Image, ImageTk
@@ -93,7 +90,7 @@ def main():
     window1.map()
     gc = window1.create_gc(foreground = red)
     
-    thread.start_new_thread(blink, (d, window1, gc, (blue, red)))
+    _thread.start_new_thread(blink, (d, window1, gc, (blue, red)))
     
     window1.damage_create(damage.DamageReportRawRectangles)
     window1.set_wm_normal_hints(

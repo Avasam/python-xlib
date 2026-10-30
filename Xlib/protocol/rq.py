@@ -25,10 +25,6 @@ import traceback
 import struct
 from array import array
 
-import operator
-byte2int = operator.itemgetter(0)
-indexbytes = operator.getitem
-
 # Xlib modules
 from .. import X
 from ..support import lock
@@ -853,10 +849,10 @@ class EventField(ValueField):
     def parse_binary_value(self, data, display, length, format):
         from . import event
 
-        estruct = display.event_classes.get(byte2int(data) & 0x7f, event.AnyEvent)
+        estruct = display.event_classes.get(data[0] & 0x7f, event.AnyEvent)
         if isinstance(estruct, dict):
             # this etype refers to a set of sub-events with individual subcodes
-            estruct = estruct[indexbytes(data, 1)]
+            estruct = estruct[data[1]]
 
         return estruct(display = display, binarydata = data[:32]), data[32:]
 
@@ -904,7 +900,7 @@ class StrClass(object):
         return (chr(len(val)) + val).encode()
 
     def parse_binary(self, data, display):
-        slen = byte2int(data) + 1
+        slen = data[0] + 1
         return decode_string(data[1:slen]), data[slen:]
 
 Str = StrClass()
@@ -1256,12 +1252,12 @@ class TextElements8(ValueField):
                 break
 
             # font change
-            if byte2int(data) == 255:
+            if data[0] == 255:
                 values.append(struct.unpack('>L', bytes(data[1:5]))[0])
                 data = data[5:]
 
             # skip null strings
-            elif byte2int(data) == 0 and indexbytes(data, 1) == 0:
+            elif data[0] == 0 and data[1] == 0:
                 data = data[2:]
 
             # string with delta

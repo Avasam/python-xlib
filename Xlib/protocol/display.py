@@ -29,10 +29,6 @@ import socket
 import struct
 import sys
 
-import operator
-byte2int = operator.itemgetter(0)
-indexbytes = operator.getitem
-
 # Xlib modules
 from .. import error
 from ..ext import ge
@@ -699,7 +695,7 @@ class Display(object):
         while True:
             if self.data_recv:
                 # Check the first byte to find out what kind of response it is
-                rtype = byte2int(self.data_recv)
+                rtype = self.data_recv[0]
 
             # Are we're waiting for additional data for the current packet?
             if self.recv_packet_len:
@@ -738,7 +734,7 @@ class Display(object):
 
     def parse_error_response(self, request):
         # Code is second byte
-        code = indexbytes(self.data_recv, 1)
+        code = self.data_recv[1]
 
         # Fetch error class
         estruct = self.error_classes.get(code, error.XError)
@@ -828,10 +824,6 @@ class Display(object):
         estruct = self.event_classes.get(etype, event.AnyEvent)
         if isinstance(estruct, dict):
             subcode = self.data_recv[1]
-
-            # Python2 compatibility
-            if isinstance(subcode, str):
-                subcode = ord(subcode)
 
             # this etype refers to a set of sub-events with individual subcodes
             estruct = estruct[subcode]

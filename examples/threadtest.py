@@ -8,7 +8,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from Xlib import display, X, threaded
 import time
-import thread
+import _thread
 
 def redraw(win, gc):
     # win.clear_area()
@@ -42,7 +42,7 @@ def main():
 
     gc = window.create_gc(foreground = red)
 
-    thread.start_new_thread(blink, (d, window, gc, (blue, red)))
+    _thread.start_new_thread(blink, (d, window, gc, (blue, red)))
 
     while 1:
         event = d.next_event()
