@@ -1,7 +1,9 @@
 import os
 import re
+import socket
 import subprocess
 import sys
+import time
 import unittest
 
 from Xlib import X, error
@@ -63,6 +65,61 @@ class TestParseXbug(unittest.TestCase):
         ])
         self.assertIn("'vendor': 'test'", out)
         self.assertIn("'focus': 4660", out)
+
+
+def recv_exactly(sock, size):
+    data = b''
+    while len(data) < size:
+        chunk = sock.recv(size - len(data))
+        if not chunk:
+            break
+        data += chunk
+    return data
+
+
+class TestTcpbug(unittest.TestCase):
+
+    def test_relay_and_log(self):
+        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.addCleanup(server.close)
+        server.settimeout(10)
+        server.bind(('127.0.0.1', 0))
+        server.listen(1)
+        # tcpbug only listens on a given port, so find a free one
+        probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        probe.bind(('127.0.0.1', 0))
+        port = probe.getsockname()[1]
+        probe.close()
+
+        process = subprocess.Popen(
+            [sys.executable, os.path.join(UTILS_DIR, 'tcpbug.py'), str(port), '127.0.0.1', str(server.getsockname()[1])],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        )
+        try:
+            deadline = time.time() + 10
+            while True:
+                try:
+                    client = socket.create_connection(('127.0.0.1', port), timeout=10)
+                    break
+                except ConnectionRefusedError:
+                    if time.time() > deadline or process.poll() is not None:
+                        raise
+                    time.sleep(0.05)
+            with client:
+                client.sendall(b'hello')
+                conn, _ = server.accept()
+                with conn:
+                    self.assertEqual(recv_exactly(conn, 5), b'hello')
+                    conn.sendall(b'world')
+                    self.assertEqual(recv_exactly(client, 5), b'world')
+            out, err = process.communicate(timeout=10)
+        finally:
+            if process.poll() is None:
+                process.kill()
+                process.communicate()
+
+        self.assertEqual(process.returncode, 0, err.decode())
+        self.assertEqual(out, xbug_log(((b'C', b'hello'), (b'S', b'world'))))
 
 
 if __name__ == '__main__':

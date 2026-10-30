@@ -12,11 +12,12 @@ def tcpbug(listenaddr, destaddr, outputfd):
     listen.listen(1)
 
     client, addr = listen.accept()
+    listen.close()
 
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.connect(destaddr)
 
-    cwbuf = swbuf = outbuf = ''
+    cwbuf = swbuf = outbuf = b''
 
     while client or server or outbuf:
         readset = []
@@ -39,16 +40,18 @@ def tcpbug(listenaddr, destaddr, outputfd):
             data = client.recv(2000)
             if data:
                 swbuf = swbuf + data
-                outbuf = outbuf + 'C%d\n%s' % (len(data), data)
+                outbuf = outbuf + ('C%d\n' % len(data)).encode() + data
             else:
+                client.close()
                 client = None
 
         if server in readset:
             data = server.recv(2000)
             if data:
                 cwbuf = cwbuf + data
-                outbuf = outbuf + 'S%d\n%s' % (len(data), data)
+                outbuf = outbuf + ('S%d\n' % len(data)).encode() + data
             else:
+                server.close()
                 server = None
 
         if client in writeset:
