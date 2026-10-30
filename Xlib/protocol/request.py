@@ -791,14 +791,14 @@ class ListFontsWithInfo(rq.ReplyRequest):
 
     def _parse_response(self, data):
 
-        if ord(data[1]) == 0:
+        if data[1] == 0:
             self._response_lock.acquire()
             self._data = self._fonts
             del self._fonts
             self._response_lock.release()
             return
 
-        r, d = self._reply.parse_binary(data)
+        r, d = self._reply.parse_binary(data, self._display)
         self._fonts.append(r)
 
         self._display.sent_requests.insert(0, self)

@@ -809,7 +809,8 @@ class Display(object):
         self.send_recv_lock.release()
 
 
-        return req.sequence_number == request
+        # Not req.sequence_number: ListFontsWithInfo has no reply attributes
+        return req._serial == request
 
 
     def parse_event_response(self, etype):

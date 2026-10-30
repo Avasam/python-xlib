@@ -152,6 +152,16 @@ class TestXlibDisplay(unittest.TestCase):
         fonts = self.display.list_fonts("*", 1)
         self.assertNotEqual(fonts, [])
 
+    def test_list_fonts_with_info(self):
+        # The server always provides the built-in "fixed" font
+        fonts = self.display.list_fonts_with_info("fixed", 1)
+        self.assertEqual(len(fonts), 1)
+        self.assertIn("fixed", fonts[0].name)
+        self.assertGreater(fonts[0].font_ascent, 0)
+
+    def test_list_fonts_with_info_no_match(self):
+        self.assertEqual(len(self.display.list_fonts_with_info(self.dummy_str, 1)), 0)
+
     def test_lookup_valid_keysym(self):
         self.assertNotEqual(self.display.lookup_string(self.keysym), None)
 
