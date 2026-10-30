@@ -9,11 +9,6 @@ import struct
 # Change path so we find Xlib
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-def dummy_buffer(str, x, y = sys.maxint):
-    return str[x:y]
-
-__builtins__.buffer = dummy_buffer
-
 from Xlib.protocol import display, request, rq, event
 from Xlib import error
 
@@ -23,7 +18,7 @@ rq.DictWrapper = lambda x: x
 class BugFile(object):
     def __init__(self, file):
         self.file = file
-        self.cbuf = self.sbuf = ''
+        self.cbuf = self.sbuf = b''
 
     def read_client(self, bytes):
         while len(self.cbuf) < bytes and self.file:
@@ -45,16 +40,16 @@ class BugFile(object):
 
     def read_next(self):
         line = self.file.readline()
-        if line == '':
+        if line == b'':
             self.file = None
             return
 
-        src = line[0]
+        src = line[:1]
         length = int(line[1:-1])
         data = self.file.read(length)
-        if src == 'C':
+        if src == b'C':
             self.cbuf = self.cbuf + data
-        elif src == 'S':
+        elif src == b'S':
             self.sbuf = self.sbuf + data
         else:
             raise ValueError('Bad control line: %s' % line)
@@ -63,7 +58,7 @@ class BugFile(object):
 class ParseString(object):
     def __init__(self, datafunc):
         self.get_data = datafunc
-        self.data = ''
+        self.data = b''
 
     def __getitem__(self, key):
         if not isinstance(key, slice):
@@ -79,10 +74,10 @@ class ParseString(object):
             return self.data[key]
 
         else:
-            # replacement of __getslice__
-            i = key.start
-            j = key.stop
-            if j == sys.maxint:
+            # replacement of __getslice__, which got 0 and sys.maxsize for omitted bounds
+            i = 0 if key.start is None else key.start
+            j = sys.maxsize if key.stop is None else key.stop
+            if j == sys.maxsize:
                 if self.get_data:
                     ps = ParseString(self.get_data)
                     self.get_data = None
@@ -107,7 +102,7 @@ class DummyDisplay(object):
         return None
 
 class ParseXbug(object):
-    def __init__(self, infile = sys.stdin, outfile = sys.stdout):
+    def __init__(self, infile = sys.stdin.buffer, outfile = sys.stdout):
         bf = BugFile(infile)
         self.cdata = ParseString(bf.read_client)
         sdata = ParseString(bf.read_server)
@@ -159,7 +154,7 @@ class ParseXbug(object):
             if len(d) != 32:
                 # Print out remaining requests
                 try:
-                    self.get_requests(sys.maxint)
+                    self.get_requests(sys.maxsize)
                 except ValueError:
                     pass
                 return
@@ -167,12 +162,12 @@ class ParseXbug(object):
             sdata = sdata[32:]
 
             # Check type
-            t = ord(d[0])
+            t = d[0]
 
             # Error
             if t == 0:
                 # Code is second byte
-                code = ord(d[1])
+                code = d[1]
                 # Fetch error class
                 estruct = error.xerror_class.get(code, error.XError)
                 r, d = estruct._fields.parse_binary(d, self.disp)
@@ -221,7 +216,7 @@ class ParseXbug(object):
 
             self.cdata = self.cdata[rlen:]
 
-            opcode = ord(d[0])
+            opcode = d[0]
             self.last_request = request.major_codes.get(opcode)
             self.last_serial = self.last_serial + 1
 
