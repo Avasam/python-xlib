@@ -211,13 +211,9 @@ def old_get_auth(sock, dname, host, dno):
             if len(parts) == 3:
                 auth_name = parts[1]
                 hexauth = parts[2]
-                auth = b''
 
                 # Translate hexcode into binary
-                for i in range(0, len(hexauth), 2):
-                    auth = auth + chr(int(hexauth[i:i+2], 16))
-
-                auth_data = auth
+                auth_data = bytes.fromhex(hexauth)
     except os.error:
         pass
 

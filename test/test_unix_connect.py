@@ -2,6 +2,7 @@
 
 from functools import partial
 import gc
+import io
 import socket
 import sys
 import unittest
@@ -151,6 +152,15 @@ class TestUnixConnect(unittest.TestCase):
                     self.assertIsInstance(s, FakeSocket)
                     expected_calls.append(('ensure_not_inheritable', s))
                 self.assertEqual(calls, expected_calls)
+
+    def test_old_get_auth(self):
+        for xauth_output, expected in (
+            ('host/unix:0  MIT-MAGIC-COOKIE-1  0123abcd\n', ('MIT-MAGIC-COOKIE-1', b'\x01\x23\xab\xcd')),
+            # No cookie for this display.
+            ('', ('', b'')),
+        ):
+            with patch('os.popen', return_value=io.StringIO(xauth_output)):
+                self.assertEqual(unix_connect.old_get_auth(None, 'host/unix:0', 'host', 0), expected)
 
     def test_leaking_sockets(self):
         with warnings.catch_warnings():
