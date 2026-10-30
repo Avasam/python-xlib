@@ -3,7 +3,7 @@ requires = ["uv_build>=0.13.5,<0.14"]
 build-backend = "uv_build"
 
 [project]
-name = "python-xlib"
+name = "avasam-python-xlib"
 # `Xlib.__version__` reads this from the installed metadata.
 version = "0.33"
 description = "Python X Library"
@@ -11,6 +11,7 @@ readme = "README.rst"
 license = "LGPL-2.1-or-later"
 license-files = ["LICENSE"]
 authors = [{ name = "Peter Liljenberg", email = "petli@ctrl-c.liu.se" }]
+maintainers = [{ name = "Avasam" }]
 keywords = ["windows", "x", "x11", "xlib"]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
@@ -31,9 +32,11 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/python-xlib/python-xlib"
-Download = "https://github.com/python-xlib/python-xlib/releases"
-Changelog = "https://github.com/python-xlib/python-xlib/blob/master/CHANGELOG.md"
+Homepage = "https://github.com/Avasam/python-xlib"
+Download = "https://github.com/Avasam/python-xlib/releases"
+Changelog = "https://github.com/Avasam/python-xlib/blob/HEAD/CHANGELOG.md"
+Issues = "https://github.com/Avasam/python-xlib/issues"
+Upstream = "https://github.com/python-xlib/python-xlib"
 
 [dependency-groups]
 dev = [

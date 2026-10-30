@@ -1,9 +1,34 @@
-The Python X Library
-====================
+The Python X Library (Avasam's fork)
+====================================
 
-|Build Status| |codecov.io| |Code Health|
+|Build Status| |codecov.io|
 
-`Homepage`_ | `Releases`_ | `Changelog`_
+`Homepage`_ | `Releases`_ | `Changelog`_ | `Upstream`_
+
+About this fork
+~~~~~~~~~~~~~~~
+
+This is a fork of `python-xlib <Upstream_>`_, published on PyPI as
+``avasam-python-xlib``. It provides the same ``Xlib`` package and API, so it
+works as a drop-in replacement.
+
+My main motivation for maintaining this fork is `AutoSplit`_, which depends on
+it.
+
+The goals of this fork are:
+
+- **First-party typing**: the package ships inline type annotations and a
+  ``py.typed`` marker (PEP 561). They match or improve upon typeshed's
+  `types-python-xlib`_ stubs.
+- **Modern infrastructure**: pip, setuptools and Travis CI are replaced by
+  `uv`_, ``pyproject.toml`` and GitHub Actions.
+- **Performance improvements** and **Bug fixes**.
+- **Wheels**: every release is built and published as a wheel alongside the
+  source distribution.
+- **Wide Python support**: keeping support for Python 3 versions as old as is
+  feasible and reasonable.
+- **Fewer runtime dependencies**: dropping third-party packages where the
+  standard library or a small amount of code suffices.
 
 Copyright
 ~~~~~~~~~
@@ -36,7 +61,12 @@ To install the Python Xlib, run this command:
 
 ::
 
-    pip install python-xlib
+    pip install avasam-python-xlib
+
+This fork installs the same ``Xlib`` package as ``python-xlib``, so uninstall
+``python-xlib`` first. Also uninstall ``types-python-xlib``: type checkers
+prefer stub packages over inline annotations, so the stubs would shadow this
+package's own types.
 
 To install from a source checkout, run ``pip install .`` instead.
 Building from source needs Python 3.8 or newer.
@@ -77,7 +107,7 @@ Documentation
 ~~~~~~~~~~~~~
 
 The reference manual is not finished by far, but is probably still useful. It
-can be `browsed online <https://python-xlib.github.io/>`__.
+can be `browsed online <https://python-xlib.github.io/>`__ (hosted by upstream).
 
 There are also some `example programs <Examples_>`_ and, of course,
 `the standard X11 documentation <https://tronche.com/gui/x/xlib/>`__ applies.
@@ -110,15 +140,20 @@ http://www.rahul.net/kenton/xsites.html
 See the file TODO for a detailed list of what is missing, approximately
 ordered by importance.
 
-.. _Homepage:     https://github.com/python-xlib/python-xlib
-.. _Releases:     https://github.com/python-xlib/python-xlib/releases
-.. _Changelog:    https://github.com/python-xlib/python-xlib/tree/master/CHANGELOG.md
-.. _Contributors: https://github.com/python-xlib/python-xlib/graphs/contributors
-.. _Examples:     https://github.com/python-xlib/python-xlib/tree/master/examples
+.. _Homepage:     https://github.com/Avasam/python-xlib
+.. _Releases:     https://github.com/Avasam/python-xlib/releases
+.. _Changelog:    https://github.com/Avasam/python-xlib/blob/HEAD/CHANGELOG.md
+.. _Upstream:     https://github.com/python-xlib/python-xlib
+.. _Contributors: https://github.com/Avasam/python-xlib/graphs/contributors
+.. _Examples:     https://github.com/Avasam/python-xlib/tree/HEAD/examples
+.. _AutoSplit:    https://github.com/Toufool/AutoSplit/
+.. _types-python-xlib:
+   https://github.com/python/typeshed/tree/main/stubs/python-xlib
+.. _uv:           https://docs.astral.sh/uv/
 
-.. |Build Status| image:: https://github.com/python-xlib/python-xlib/actions/workflows/ci.yml/badge.svg?branch=master
-   :target: https://github.com/python-xlib/python-xlib/actions/workflows/ci.yml
-.. |codecov.io| image:: https://codecov.io/github/python-xlib/python-xlib/coverage.svg?branch=master
-   :target: https://codecov.io/github/python-xlib/python-xlib?branch=master
-.. |Code Health| image:: https://landscape.io/github/python-xlib/python-xlib/master/landscape.svg?style=flat
-   :target: https://landscape.io/github/python-xlib/python-xlib/master
+.. |Build Status| image::
+   https://github.com/Avasam/python-xlib/actions/workflows/ci.yml/badge.svg
+   :target: https://github.com/Avasam/python-xlib/actions/workflows/ci.yml
+.. |codecov.io| image::
+   https://codecov.io/github/Avasam/python-xlib/graph/badge.svg
+   :target: https://codecov.io/github/Avasam/python-xlib

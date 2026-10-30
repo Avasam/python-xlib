@@ -35,7 +35,7 @@ def _get_version_string():
         except ImportError:
             return '0+unknown'
     try:
-        return version('python-xlib')
+        return version('avasam-python-xlib')
     except PackageNotFoundError:
         # Running from an uninstalled source tree
         return '0+unknown'

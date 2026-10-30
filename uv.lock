@@ -18,6 +18,40 @@ exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for 
 exclude-newer-span = "P1W"
 
 [[package]]
+name = "avasam-python-xlib"
+version = "0.33"
+source = { virtual = "." }
+dependencies = [
+    { name = "importlib-metadata", version = "4.8.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.6.*'" },
+    { name = "importlib-metadata", version = "6.7.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.7.*'" },
+    { name = "six" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "coverage", version = "4.5.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.5'" },
+    { name = "coverage", version = "5.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.5.*'" },
+    { name = "coverage", version = "6.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.6.*'" },
+    { name = "coverage", version = "7.2.7", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.7.*'" },
+    { name = "coverage", version = "7.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.8.*'" },
+    { name = "coverage", version = "7.10.7", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.9.*'" },
+    { name = "coverage", version = "7.16.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
+    { name = "coverage", version = "7.17.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "importlib-metadata", marker = "python_full_version >= '3.6' and python_full_version < '3.8'" },
+    { name = "six", specifier = ">=1.10.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "coverage", marker = "python_full_version < '3.5'", specifier = "<5" },
+    { name = "coverage", marker = "python_full_version >= '3.5'" },
+]
+
+[[package]]
 name = "coverage"
 version = "4.5.4"
 source = { registry = "https://pypi.org/simple" }
@@ -716,40 +750,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/a3/82/f6e29c8d5c098b6be61460371c2c5591f4a335923639edec43b3830650a4/importlib_metadata-6.7.0.tar.gz", hash = "sha256:1aaf550d4f73e5d6783e7acb77aec43d49da8017410afae93822cc9cca98c4d4", size = 53569, upload-time = "2023-06-18T21:44:35.024Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ff/94/64287b38c7de4c90683630338cf28f129decbba0a44f0c6db35a873c73c4/importlib_metadata-6.7.0-py3-none-any.whl", hash = "sha256:cb52082e659e97afc5dac71e79de97d8681de3aa07ff18578330904a9d18e5b5", size = 22934, upload-time = "2023-06-18T21:44:33.441Z" },
-]
-
-[[package]]
-name = "python-xlib"
-version = "0.33"
-source = { virtual = "." }
-dependencies = [
-    { name = "importlib-metadata", version = "4.8.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.6.*'" },
-    { name = "importlib-metadata", version = "6.7.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.7.*'" },
-    { name = "six" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "coverage", version = "4.5.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.5'" },
-    { name = "coverage", version = "5.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.5.*'" },
-    { name = "coverage", version = "6.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.6.*'" },
-    { name = "coverage", version = "7.2.7", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.7.*'" },
-    { name = "coverage", version = "7.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.8.*'" },
-    { name = "coverage", version = "7.10.7", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.9.*'" },
-    { name = "coverage", version = "7.16.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
-    { name = "coverage", version = "7.17.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "importlib-metadata", marker = "python_full_version >= '3.6' and python_full_version < '3.8'" },
-    { name = "six", specifier = ">=1.10.0" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "coverage", marker = "python_full_version < '3.5'", specifier = "<5" },
-    { name = "coverage", marker = "python_full_version >= '3.5'" },
 ]
 
 [[package]]
