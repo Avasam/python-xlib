@@ -30,6 +30,8 @@ FamilyChaos = X.FamilyChaos
 FamilyServerInterpreted = X.FamilyServerInterpreted
 FamilyInternetV6 = X.FamilyInternetV6
 FamilyLocal = 256
+# Matches any family and address, as written by Mutter's XWayland for example
+FamilyWild = 65535
 
 class Xauthority(object):
     def __init__(self, filename = None):
@@ -107,6 +109,9 @@ class Xauthority(object):
         """Find an authentication entry matching FAMILY, ADDRESS and
         DISPNO.
 
+        Entries of family FamilyWild match any family and address,
+        like in libXau.
+
         The name of the auth scheme must match one of the names in
         TYPES.  If several entries match, the first scheme in TYPES
         will be choosen.
@@ -122,6 +127,8 @@ class Xauthority(object):
         for efam, eaddr, enum, ename, edata in self.entries:
             if enum == b'' and ename not in matches:
                 enum = num
+            if efam == FamilyWild and ename not in matches:
+                efam, eaddr = family, address
             if efam == family and eaddr == address and num == enum:
                 matches[ename] = edata
 
