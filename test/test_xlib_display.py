@@ -1,10 +1,5 @@
-#!/usr/bin/env python
-
-import sys
 import os
 import unittest
-
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 import Xlib.display
 import Xlib.error
@@ -13,11 +8,15 @@ import Xlib.protocol.event
 import Xlib.protocol.rq
 import Xlib.xobject.fontable
 import Xlib.X
+from . import Xvfb
+
+xvfb = Xvfb()
+setUpModule = xvfb.start
+tearDownModule = xvfb.stop
 
 
 class TestXlibDisplay(unittest.TestCase):
     def setUp(self):
-        # Create authority file.
         self.display_num = os.getenv("DISPLAY")
         self.display = Xlib.display.Display(self.display_num)
         self.dummy_str = "qqq"

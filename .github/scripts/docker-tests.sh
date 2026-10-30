@@ -6,8 +6,8 @@
 # Usage: docker-tests.sh <requirements file exported from uv.lock>
 set -eux
 
-apk add --no-cache xvfb xauth mcookie
+apk add --no-cache xvfb
 
 pip install --require-hashes -r "$1"
-python -W all -m coverage run runtests.py
+python -W all -m coverage run -m unittest -v
 coverage xml

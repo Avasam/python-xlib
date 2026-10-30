@@ -1020,12 +1020,7 @@ void output(char *name, void *data, int length)
 
 '''
 
-PY_HEADER = r'''#!/usr/bin/env python2
-
-import sys, os
-sys.path.insert(0, os.path.normpath(os.path.join(__file__, '../..')))
-
-import unittest
+PY_HEADER = r'''import unittest
 from Xlib.protocol import request, event
 from . import %(endname)sTest as EndianTest
 from . import DummyDisplay

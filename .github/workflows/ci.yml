@@ -18,6 +18,10 @@ jobs:
   test:
     name: Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
+    env:
+      # https://docs.python.org/3/library/devmode.html#effects-of-the-python-development-mode
+      # Python 3.6 and older ignore it.
+      PYTHONDEVMODE: 1
     strategy:
       fail-fast: false
       matrix:
@@ -47,12 +51,12 @@ jobs:
         if: ${{ !matrix.docker }}
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends xauth xvfb
+          sudo apt-get install -y --no-install-recommends xvfb
 
       - name: Run tests under Xvfb
         if: ${{ !matrix.docker }}
         run: |
-          uv run --locked python -W all -m coverage run runtests.py
+          uv run --locked python -W all -m coverage run -m unittest -v
           uv run --locked coverage xml
 
       - name: Run tests under Xvfb in Docker
@@ -61,6 +65,7 @@ jobs:
         run: |
           uv export --locked --no-emit-project --output-file "$RUNNER_TEMP/requirements.txt"
           docker run --rm \
+            --env PYTHONDEVMODE \
             --volume "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" \
             --volume "$RUNNER_TEMP/requirements.txt:/tmp/requirements.txt:ro" \
             --workdir "$GITHUB_WORKSPACE" \

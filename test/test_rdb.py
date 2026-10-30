@@ -1,13 +1,6 @@
-#!/usr/bin/env python
-
-import sys
-import os
-
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+import unittest
 
 import Xlib.rdb
-
-import unittest
 
 resources = """
 ! Single component

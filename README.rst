@@ -112,6 +112,19 @@ can be `browsed online <https://python-xlib.github.io/>`__ (hosted by upstream).
 There are also some `example programs <Examples_>`_ and, of course,
 `the standard X11 documentation <https://tronche.com/gui/x/xlib/>`__ applies.
 
+Running the tests
+~~~~~~~~~~~~~~~~~
+
+The tests use the standard ``unittest`` discovery. Tests that need a live X
+display start their own private ``Xvfb`` server, so ``Xvfb`` must be installed
+(the ``xvfb`` package on most distributions), and your own display is never
+touched.
+
+::
+
+    uv run python -m unittest
+    uv run python -m unittest -v test.test_xlib_display
+
 
 Project status
 ~~~~~~~~~~~~~~
