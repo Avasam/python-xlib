@@ -17,9 +17,9 @@ it.
 
 The goals of this fork are:
 
-- **First-party typing**: the package ships inline type annotations and a
-  ``py.typed`` marker (PEP 561). They match or improve upon typeshed's
-  `types-python-xlib`_ stubs.
+- **First-party typing**: the package ships type stubs and a ``py.typed``
+  marker (PEP 561). They started from typeshed's `types-python-xlib`_ stubs,
+  and follow this fork's changes.
 - **Modern infrastructure**: pip, setuptools and Travis CI are replaced by
   `uv`_, ``pyproject.toml`` and GitHub Actions.
 - **Performance improvements** and **Bug fixes**.
@@ -72,7 +72,7 @@ To install Avasam's fork of the Python Xlib, run this command:
 
 This fork installs the same ``Xlib`` package as ``python-xlib``, so uninstall
 ``python-xlib`` first. Also uninstall ``types-python-xlib``: type checkers
-prefer stub packages over inline annotations, so the stubs would shadow this
+prefer stub packages over the stubs a package ships, so it would shadow this
 package's own types.
 
 To install from a source checkout, run ``pip install .`` instead.

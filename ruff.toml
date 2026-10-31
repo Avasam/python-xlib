@@ -4,6 +4,9 @@ preview = false
 # Ruff can't infer from `requires-python = ">=3.3"` (below its minimum),
 # and would otherwise default to Python 3.10+. See: https://github.com/astral-sh/ruff/issues/8832
 target-version = "py37"
+# Stubs never run. Type checkers parse them with their own parser, or with the grammar of the
+# Python running mypy, regardless of `target-version`. See: https://github.com/astral-sh/ruff/issues/21677
+per-file-target-version = { "*.pyi" = "py39" }
 
 [lint]
 ignore = [
