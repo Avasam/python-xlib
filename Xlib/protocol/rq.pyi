@@ -5,13 +5,12 @@ from array import array
 # Avoid name collision with List.type
 from builtins import type as Type
 from collections.abc import Callable, Iterable, Sequence
-from typing import Any, TypeVar, overload, type_check_only
+from typing import Any, Protocol, TypeVar, overload, type_check_only
 from typing_extensions import Final, Literal, LiteralString, SupportsIndex, TypeAlias
 
 from Xlib._typing import ConvertibleToInt, ErrorHandler
 from Xlib.display import _BaseDisplay, _ResourceBaseClass
 from Xlib.error import XError
-from Xlib.ext.xinput import ClassInfoClass
 from Xlib.protocol import display
 
 _T = TypeVar("_T")
@@ -204,12 +203,18 @@ class String16(ValueField):
         self, data: SliceableBuffer, display: Unused, length: int | Literal["odd", "even"], format: Unused
     ) -> tuple[tuple[Any, ...], SliceableBuffer]: ...
 
+# Protocol for List types without a struct code that only parse, like Xlib.ext.xinput.ClassInfo
+@type_check_only
+class _ParsesBinary(Protocol):
+    structcode: None
+    def parse_binary(self, data: SliceableBuffer, display: display.Display | None, /) -> tuple[Any, SliceableBuffer]: ...
+
 class List(ValueField):
     structcode: None
-    type: Struct | ScalarObj | ResourceObj | ClassInfoClass | Type[ValueField]
+    type: Struct | ScalarObj | ResourceObj | StrClass | _ParsesBinary | Type[ValueField]
     pad: int
     def __init__(
-        self, name: str, type: Struct | ScalarObj | ResourceObj | ClassInfoClass | Type[ValueField], pad: int = 1
+        self, name: str, type: Struct | ScalarObj | ResourceObj | StrClass | _ParsesBinary | Type[ValueField], pad: int = 1
     ) -> None: ...
     def parse_binary_value(
         self, data: SliceableBuffer, display: display.Display | None, length: SupportsIndex | None, format: Unused
@@ -228,7 +233,9 @@ class FixedList(List):
 class Object(ValueField):
     type: Struct
     structcode: str | None
-    def __init__(self, name: str, type: Struct, default: int | None = None) -> None: ...
+    def __init__(
+        self, name: str, type: Struct, default: tuple[object, ...] | dict[str, Any] | DictWrapper | None = None
+    ) -> None: ...
     def parse_binary_value(
         self, data: SliceableBuffer, display: display.Display | None, length: Unused, format: Unused
     ) -> tuple[DictWrapper, SliceableBuffer]: ...

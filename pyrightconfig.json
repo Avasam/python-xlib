@@ -10,4 +10,8 @@
    */
   // Only the public API
   "include": ["Xlib"],
+  "executionEnvironments": [
+    // Only runs through `uv run`, on the Python its inline metadata requires
+    { "root": "utils/run_checkers.py", "pythonVersion": "3.11" },
+  ],
 }
