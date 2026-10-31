@@ -1,3 +1,6 @@
+import io
+import os
+import tempfile
 import unittest
 
 import Xlib.rdb
@@ -139,6 +142,20 @@ class TestRDB(unittest.TestCase):
         db3.insert_resources(resource_set2)
 
         assert db1.db == db3.db
+
+
+    def testInsertFile(self):
+        # A filename can be str or bytes, anything else is read as a file object
+        tmpdir = tempfile.TemporaryDirectory()
+        self.addCleanup(tmpdir.cleanup)
+        path = os.path.join(tmpdir.name, 'resources')
+        with open(path, 'w') as f:
+            f.write(resources)
+
+        for source in (path, os.fsencode(path), io.StringIO(resources)):
+            db = Xlib.rdb.ResourceDB()
+            db.insert_file(source)
+            self.assertEqual(db['p.first.second', 'P.First.Second'], 'n.n')
 
 
 if __name__ == '__main__':

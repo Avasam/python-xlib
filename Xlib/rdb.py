@@ -70,7 +70,7 @@ class ResourceDB(object):
 
         """
 
-        if isinstance(file, bytes):
+        if isinstance(file, (str, bytes)):
             file = open(file, 'r')
 
         self.insert_string(file.read())
