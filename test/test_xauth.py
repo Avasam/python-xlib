@@ -1,6 +1,7 @@
 import os
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from Xlib import error, xauth
 from . import xauth_entry
@@ -49,6 +50,36 @@ class TestGetBestAuth(unittest.TestCase):
             self.get_best_auth([
                 (xauth.FamilyLocal, b'other', b'0', COOKIE, b'wrong host'),
             ], xauth.FamilyLocal, b'host', 0)
+
+
+class TestDefaultFilename(unittest.TestCase):
+
+    def setUp(self):
+        self.home = tempfile.mkdtemp(prefix='xlib-test-')
+        self.addCleanup(os.rmdir, self.home)
+        filename = os.path.join(self.home, '.Xauthority')
+        with open(filename, 'wb') as f:
+            f.write(xauth_entry(xauth.FamilyLocal, b'host', b'0', COOKIE, b'cookie'))
+        self.addCleanup(os.unlink, filename)
+
+    def test_home(self):
+        with patch.dict(os.environ, {'HOME': self.home, 'USERPROFILE': 'elsewhere'}):
+            os.environ.pop('XAUTHORITY', None)
+            self.assertEqual(len(xauth.Xauthority()), 1)
+
+    def test_user_profile_without_home(self):
+        # As on Windows, where $HOME is usually unset
+        with patch.dict(os.environ, {'USERPROFILE': self.home}):
+            os.environ.pop('XAUTHORITY', None)
+            os.environ.pop('HOME', None)
+            self.assertEqual(len(xauth.Xauthority()), 1)
+
+    def test_no_home(self):
+        with patch.dict(os.environ):
+            for name in ('XAUTHORITY', 'HOME', 'USERPROFILE'):
+                os.environ.pop(name, None)
+            with self.assertRaises(error.XauthError):
+                xauth.Xauthority()
 
 
 if __name__ == '__main__':
