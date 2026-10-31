@@ -33,7 +33,7 @@ SUPPORTED_PROTOCOLS = (None, 'tcp', 'unix')
 uname = platform.uname()
 if (uname[0] == 'Darwin') and ([int(x) for x in uname[2].split('.')] >= [9, 0]):
     SUPPORTED_PROTOCOLS += ('darwin',)
-    DARWIN_DISPLAY_RE = re.compile(r'^/private/tmp/[-:a-zA-Z0-9._]*:(?P<dno>[0-9]+)(\.(?P<screen>[0-9]+))?$')
+DARWIN_DISPLAY_RE = re.compile(r'^/private/tmp/[-:a-zA-Z0-9._]*:(?P<dno>[0-9]+)(\.(?P<screen>[0-9]+))?$')
 
 DISPLAY_RE = re.compile(r'^((?P<proto>tcp|unix)/)?(?P<host>[-:a-zA-Z0-9._]*):(?P<dno>[0-9]+)(\.(?P<screen>[0-9]+))?$')
 
@@ -46,7 +46,7 @@ def get_display(display):
     re_list = [(DISPLAY_RE, {})]
 
     if 'darwin' in SUPPORTED_PROTOCOLS:
-        re_list.insert(0, (DARWIN_DISPLAY_RE, {'protocol': 'darwin'}))
+        re_list.insert(0, (DARWIN_DISPLAY_RE, {'proto': 'darwin'}))
 
     for display_re, defaults in re_list:
         m = display_re.match(display)

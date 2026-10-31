@@ -209,5 +209,31 @@ class TestNoUnixSocketSupport(unittest.TestCase):
             unix_connect.get_socket('unix/:0', 'unix', '', 0)
 
 
+class TestDarwinConnect(unittest.TestCase):
+    """XQuartz sets `DISPLAY` to its launchd socket path."""
+
+    def setUp(self):
+        patcher = patch('Xlib.support.unix_connect.SUPPORTED_PROTOCOLS', (None, 'tcp', 'unix', 'darwin'))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_get_display(self):
+        for display, expected in (
+            ('/private/tmp/org.xquartz:0', ('darwin', None, 0, 0)),
+            ('/private/tmp/org.xquartz:1.2', ('darwin', None, 1, 2)),
+            # Not a launchd socket, parsed as usual.
+            (':0', (None, '', 0, 0)),
+        ):
+            self.assertEqual(unix_connect.get_display(display), (display,) + expected)
+
+    def test_get_socket_connects_to_launchd_socket(self):
+        display = '/private/tmp/org.xquartz:0'
+        with patch('Xlib.support.unix_connect._get_unix_socket') as get_unix_socket, \
+             patch('Xlib.support.unix_connect._ensure_not_inheritable'):
+            s = unix_connect.get_socket(display, 'darwin', None, 0)
+        self.assertIs(s, get_unix_socket.return_value)
+        get_unix_socket.assert_called_once_with(display)
+
+
 if __name__ == '__main__':
     unittest.main()
