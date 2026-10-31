@@ -38,12 +38,13 @@ def run(*command: str) -> str:
 def newest_python() -> str:
     """The newest stable CPython uv knows about, prereleases excluded."""
     listing = json.loads(run("uv", "python", "list", "--all-versions", "--output-format=json"))
-    return "%d.%d" % max(
+    major, minor = max(
         (python["version_parts"]["major"], python["version_parts"]["minor"])
         for python in listing
         if python["implementation"] == "cpython"
         and re.fullmatch(r"\d+\.\d+\.\d+", python["version"])
     )
+    return f"{major}.{minor}"
 
 
 def old_mypy_python() -> str:
@@ -81,30 +82,32 @@ def main() -> int:
         *UV_RUN,
         "--isolated",
         "--quiet",
-        "--python=" + old_mypy_python(),
+        "--python",
+        old_mypy_python(),
         "--only-group=mypy",
     )
     oldest_mypy = run(
         *old_mypy,
         "python",
         "-c",
-        'import mypy.defaults as d; print("%d.%d" % d.PYTHON3_VERSION_MIN)',
+        'import mypy.defaults as d; print(*d.PYTHON3_VERSION_MIN, sep=".")',
     ).strip()
 
     checks = {
         # `--level=warning` hides one "Analysis of function is skipped because it is unannotated" per untyped function
-        "pyright (Python %s)" % newest: (
+        f"pyright (Python {newest})": (
             *UV_RUN,
             "pyright",
             "--level=warning",
-            "--pythonversion=" + newest,
+            "--pythonversion",
+            newest,
         ),
         "pyright (oldest, from pyrightconfig.json)": (*UV_RUN, "pyright", "--level=warning"),
-        "mypy (Python %s)" % newest: (*UV_RUN, "mypy", "--python-version=" + newest),
-        "mypy (Python %s)" % oldest_mypy: (*old_mypy, "mypy", "--python-version=" + oldest_mypy),
+        f"mypy (Python {newest})": (*UV_RUN, "mypy", "--python-version", newest),
+        f"mypy (Python {oldest_mypy})": (*old_mypy, "mypy", "--python-version", oldest_mypy),
         "ruff": (*UV_RUN, "ruff", "check"),
         "ty (oldest, from ty.toml)": (*UV_RUN, "ty", "check"),
-        "ty (Python %s)" % newest: (*UV_RUN, "ty", "check", "--python-version=" + newest),
+        f"ty (Python {newest})": (*UV_RUN, "ty", "check", "--python-version", newest),
     }
 
     failed = []
@@ -112,7 +115,7 @@ def main() -> int:
         futures = {label: executor.submit(check, command) for label, command in checks.items()}
         for label, future in futures.items():
             returncode, output = future.result()
-            print("\n==> " + label, flush=True)
+            print("\n==>", label, flush=True)
             sys.stdout.buffer.write(output)
             sys.stdout.buffer.flush()
             if returncode:
@@ -121,7 +124,7 @@ def main() -> int:
     if failed:
         print("\nFailed, rerun one with the command below it:", file=sys.stderr)
         for label in failed:
-            print("  %s\n    %s" % (label, shlex.join(checks[label])), file=sys.stderr)
+            print(f"  {label}\n    {shlex.join(checks[label])}", file=sys.stderr)
         return 1
     print("\nAll checks passed")
     return 0
