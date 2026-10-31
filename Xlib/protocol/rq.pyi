@@ -82,7 +82,7 @@ class FormatField(Field):
 Format = FormatField
 
 class ValueField(Field):
-    def __init__(self, name: str, default: int | None = None) -> None: ...
+    def __init__(self, name: str | None, default: int | None = None) -> None: ...
 
 class Int8(ValueField):
     structcode: str
@@ -209,13 +209,13 @@ class _ParsesBinary(Protocol):
     structcode: None
     def parse_binary(self, data: SliceableBuffer, display: display.Display | None, /) -> tuple[Any, SliceableBuffer]: ...
 
+_ListType: TypeAlias = Struct | ScalarObj | ResourceObj | StrClass | _ParsesBinary | ValueField | Type[ValueField]
+
 class List(ValueField):
     structcode: None
-    type: Struct | ScalarObj | ResourceObj | StrClass | _ParsesBinary | Type[ValueField]
+    type: _ListType
     pad: int
-    def __init__(
-        self, name: str, type: Struct | ScalarObj | ResourceObj | StrClass | _ParsesBinary | Type[ValueField], pad: int = 1
-    ) -> None: ...
+    def __init__(self, name: str, type: _ListType, pad: int = 1) -> None: ...
     def parse_binary_value(
         self, data: SliceableBuffer, display: display.Display | None, length: SupportsIndex | None, format: Unused
     ) -> tuple[list[DictWrapper | None], SliceableBuffer]: ...
@@ -225,7 +225,7 @@ class List(ValueField):
 
 class FixedList(List):
     size: int
-    def __init__(self, name: str, size: int, type: Struct | ScalarObj, pad: int = 1) -> None: ...
+    def __init__(self, name: str, size: int, type: _ListType, pad: int = 1) -> None: ...
     def parse_binary_value(
         self, data: SliceableBuffer, display: display.Display | None, length: Unused, format: Unused
     ) -> tuple[list[DictWrapper | None], SliceableBuffer]: ...

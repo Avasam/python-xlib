@@ -6,7 +6,8 @@
 python-version = "3.8"
 
 [src]
-# Only the public API
+# Only the public API. Massively reduces false-positives as an early adopter of ty
+# No analyzeUnannotatedFunctions or check_untyped_defs equivalent
 include = ["Xlib"]
 
 ###

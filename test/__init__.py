@@ -8,9 +8,9 @@ import struct
 import subprocess
 import tempfile
 import array
+from unittest import mock
 
 import Xlib.protocol.event
-import Xlib.protocol.rq
 import Xlib.xauth
 
 
@@ -36,8 +36,6 @@ class CmpArray(object):
     def __eq__(self, other):
         return self.array.tolist() == other
 
-Xlib.protocol.rq.array = CmpArray
-
 
 class DummyDisplay(object):
 
@@ -57,19 +55,33 @@ class TestCase(unittest.TestCase):
         if len(bin) != 0:
             self.fail('binary content not empty:\n' + ''.join(tohex(bin)))
 
-class BigEndianTest(TestCase):
+class EndianTest(TestCase):
+    """Makes the arrays that `rq` parses compare equal to the lists the tests expect."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls._array_patcher = mock.patch('Xlib.protocol.rq.array', CmpArray)
+        cls._array_patcher.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._array_patcher.stop()
+
+class BigEndianTest(EndianTest):
 
     @classmethod
     def setUpClass(cls):
         if struct.unpack('BB', struct.pack('H', 0x0100))[0] != 1:
             raise unittest.SkipTest('big-endian tests, skipping on this system')
+        super().setUpClass()
 
-class LittleEndianTest(TestCase):
+class LittleEndianTest(EndianTest):
 
     @classmethod
     def setUpClass(cls):
         if struct.unpack('BB', struct.pack('H', 0x0100))[0] != 0:
             raise unittest.SkipTest('little-endian tests, skipping on this system')
+        super().setUpClass()
 
 
 def tohex(bin):

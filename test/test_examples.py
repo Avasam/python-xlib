@@ -125,7 +125,8 @@ class TestExamples(unittest.TestCase):
         path = os.path.join(examples_folder, "dpms.py")
         with open(path) as f:
             source = f.read()
-        example = {"__name__": "dpms"}
+        # Bare `dict` since `exec` fills in functions, and Python 3.3 has no `typing`
+        example = {"__name__": "dpms"}  # type: dict
         exec(compile(source, path, "exec"), example)
         with patch("Xlib.display.Display", return_value=no_dpms), self.assertRaises(SystemExit) as cm:
             example["main"]()
