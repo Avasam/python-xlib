@@ -10,25 +10,65 @@ source-include = ["test/*.py"]
 [project]
 name = "avasam-python-xlib"
 # `Xlib.__version__` reads this from the installed metadata.
+# Changing it publishes a release, bump it with `utils/bump-version.sh`. See CONTRIBUTING.md.
 version = "0.33"
-description = "Python X Library"
+description = "Python X Library: a drop-in fork of python-xlib, the pure Python X11 client, with bug fixes, speedups and modern packaging"
 readme = "README.rst"
 license = "LGPL-2.1-or-later"
 license-files = ["LICENSE"]
 authors = [{ name = "Peter Liljenberg", email = "petli@ctrl-c.liu.se" }]
 maintainers = [{ name = "Avasam" }]
-keywords = ["windows", "x", "x11", "xlib"]
+keywords = [
+  "windows",
+  "x",
+  "x11",
+  "xlib",
+  "python-xlib",
+  "x window system",
+  "x protocol",
+  "xorg",
+  "xvfb",
+  "xwayland",
+  "gui",
+  "window manager",
+  "automation",
+  "keyboard",
+  "mouse",
+  "screenshot",
+  "composite",
+  "dpms",
+  "randr",
+  "record",
+  "screensaver",
+  "shape",
+  "xdamage",
+  "xfixes",
+  "xinerama",
+  "xinput",
+  "xtest",
+]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Environment :: X11 Applications",
   "Intended Audience :: Developers",
+  "Natural Language :: English",
   "Operating System :: OS Independent",
+  # "Operating System :: MacOS",
+  # "Operating System :: Microsoft :: Windows",
+  # "Operating System :: POSIX",
+  # "Operating System :: POSIX :: BSD",
+  # "Operating System :: POSIX :: Linux",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+  "Topic :: Desktop Environment",
+  "Topic :: Desktop Environment :: Window Managers",
   "Topic :: Software Development :: Libraries :: Python Modules",
   "Topic :: Software Development :: Libraries",
+  "Topic :: Software Development :: Testing",
   "Topic :: Software Development :: User Interfaces",
+  # "Typing :: Typed",
 ]
 requires-python = ">=3.3"
 dependencies = [

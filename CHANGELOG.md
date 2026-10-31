@@ -65,6 +65,7 @@ Dependencies and packaging
 - Building no longer needs `setuptools` or `setuptools-scm`.
 - Built with `uv_build` from `pyproject.toml`. Building from source needs Python 3.8 or newer.
 - Wheels are `py3-none-any`, and the sdist is `.tar.gz`.
+- PyPy is tested in CI, on PyPy 3.8 and 3.12.
 - The version is declared only in `pyproject.toml`. `Xlib.__version__` reads it from the installed metadata, and is `0+unknown` on Python 3.3 to 3.5 or from an uninstalled source tree.
 
 ---

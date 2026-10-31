@@ -1,7 +1,9 @@
 The Python X Library (Avasam's fork)
 ====================================
 
-|Build Status|
+|Build Status| |Ruff| 
+
+.. <!-- |mypy| |pyright| |ty| -->
 
 `Homepage`_ | `Releases`_ | `Changelog`_ | `Upstream`_
 
@@ -49,15 +51,17 @@ GPL v2.
 Requirements
 ~~~~~~~~~~~~
 
-The Python X Library requires Python 3.3 or newer.
+The supported Python versions are set by ``requires-python`` in
+`pyproject.toml`_.
 
-The Python X Library will only work on systems that have an X server installed,
-such as most Linux distros, but will not work on Windows or MacOS.
+The Python X Library needs an X server to connect to: native on Linux and BSD,
+`XQuartz`_ on macOS, and an X server such as `VcXsrv`_ or `X410`_ (or `WSLg`_)
+on Windows.
 
 Installation
 ~~~~~~~~~~~~
 
-To install the Python Xlib, run this command:
+To install Avasam's fork of the Python Xlib, run this command:
 
 ::
 
@@ -174,11 +178,30 @@ ordered by importance.
 .. _Upstream:     https://github.com/python-xlib/python-xlib
 .. _Contributors: https://github.com/Avasam/python-xlib/graphs/contributors
 .. _Examples:     https://github.com/Avasam/python-xlib/tree/HEAD/examples
+.. _pyproject.toml: https://github.com/Avasam/python-xlib/blob/HEAD/pyproject.toml
 .. _AutoSplit:    https://github.com/Toufool/AutoSplit/
 .. _types-python-xlib:
    https://github.com/python/typeshed/tree/main/stubs/python-xlib
 .. _uv:           https://docs.astral.sh/uv/
+.. _XQuartz:      https://www.xquartz.org/
+.. _VcXsrv:       https://github.com/marchaesen/vcxsrv
+.. _X410:         https://x410.dev/
+.. _WSLg:         https://github.com/microsoft/wslg
 
 .. |Build Status| image::
    https://github.com/Avasam/python-xlib/actions/workflows/ci.yml/badge.svg
    :target: https://github.com/Avasam/python-xlib/actions/workflows/ci.yml
+.. |Ruff| image::
+   https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
+   :target: https://github.com/astral-sh/ruff
+   :alt: Ruff
+.. |mypy| image:: https://www.mypy-lang.org/static/mypy_badge.svg
+   :target: https://mypy-lang.org/
+   :alt: Checked with mypy
+.. |pyright| image:: https://microsoft.github.io/pyright/img/pyright_badge.svg
+   :target: https://microsoft.github.io/pyright/
+   :alt: Checked with pyright
+.. |ty| image::
+   https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ty/main/assets/badge/v0.json
+   :target: https://github.com/astral-sh/ty
+   :alt: ty

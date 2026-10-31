@@ -34,11 +34,13 @@ jobs:
       # https://docs.python.org/3/library/devmode.html#effects-of-the-python-development-mode
       PYTHONDEVMODE: 1
       # Fail instead of silently building an sdist when a dependency has no arm64 wheel.
-      UV_NO_BUILD: 1
+      # Except on PyPy: uv rejects coverage's `pp38.pp39.pp310-none-any` wheel on PyPy 3.8, which pip accepts.
+      UV_NO_BUILD: ${{ !startsWith(matrix.python-version, 'pypy') }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13', '3.14', '3.15']
+        # PyPy: oldest and newest only, to keep the matrix small.
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13', '3.14', '3.15', 'pypy3.8', 'pypy3.12']
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
