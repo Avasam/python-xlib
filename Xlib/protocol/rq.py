@@ -476,7 +476,7 @@ class String16(ValueField):
     def parse_binary_value(self, data, display, length, format):
         if length == 'odd':
             length = len(data) // 2 - 1
-        elif length == 'even' or length is None:
+        elif length == 'even':
             length = len(data) // 2
 
         if self.pad:
@@ -1298,12 +1298,14 @@ class TextElements16(TextElements8):
 
 
 class GetAttrData(object):
-    _data = {} # type: dict[str, object]
     # GetAttrData classes get their attributes dynamically
     # TODO: Complete all classes inheriting from GetAttrData
     def __getattr__(self, attr):
         try:
-            return self._data[attr]
+            if self._data:
+                return self._data[attr]
+            else:
+                raise AttributeError(attr)
         except KeyError:
             raise AttributeError(attr)
 
@@ -1371,7 +1373,7 @@ class ReplyRequest(GetAttrData):
         self._display = display
         self._binary = self._request.to_binary(*args, **keys)
         self._serial = None
-        self._data = {}  # type: dict[str, object]
+        self._data = None
         self._error = None
 
         self._response_lock = lock.allocate_lock()
