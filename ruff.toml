@@ -1,3 +1,4 @@
+# Installed by `uv sync --group ruff`. Assumes the default `.venv` location.
 extend = ".venv/Beslogic-Ruff-Config/ruff.toml"
 preview = false
 # Ruff can't infer from `requires-python = ">=3.3"` (below its minimum),
