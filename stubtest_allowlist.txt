@@ -4,13 +4,6 @@
 # Type helpers, only in the stubs
 Xlib._typing
 
-# These will unconditionally fail at runtime
-# See: python-xlib/python-xlib#253
-Xlib.protocol.rq.DictWrapper.__gt__
-Xlib.protocol.rq.DictWrapper.__lt__
-Xlib.protocol.rq.Event.__gt__
-Xlib.protocol.rq.Event.__lt__
-
 # should allow setting any attribute
 Xlib.protocol.rq.GetAttrData.__setattr__
 

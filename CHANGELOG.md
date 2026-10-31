@@ -52,6 +52,7 @@ Bug Fixes
 - On macOS, a `DISPLAY` that names XQuartz's socket connects to that socket. Its protocol was parsed as `None`, so `/tmp/.X11-unix/X<n>` was tried instead.
 - On macOS, the launchd socket path XQuartz sets in `DISPLAY` (`/private/tmp/com.apple.launchd.<id>/org.xquartz:0`) no longer raises `DisplayNameError`.
 - On macOS, connecting through XQuartz's socket sends the Xauthority cookie. The hostname was looked up as `str` against `bytes` entries, so no cookie matched.
+- `rq.DictWrapper` and `rq.Event` no longer define `<` and `>`, which compared the underlying `dict` and so always raised `TypeError`. Comparing them still raises `TypeError`, but now names their own class, and a reflected comparison on the other operand gets the wrapper instead of its `dict` ([python-xlib/python-xlib#253](https://github.com/python-xlib/python-xlib/issues/253)).
 
 Extensions
 ----------
