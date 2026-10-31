@@ -67,7 +67,7 @@ def list_atoms(d,re_obj,low,high):
 
 if options.name != None:
     try:
-        atom = d.intern_atom(options.name)
+        atom = d.intern_atom(options.name, only_if_exists=True)
         val = d.get_atom_name(atom)
         print_atom(options.format,atom,val)
     except:
