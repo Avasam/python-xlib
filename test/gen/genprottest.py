@@ -163,8 +163,7 @@ def build_request(endian):
     {
     ''')
 
-    for gf in genfuncs:
-        fc.write('      %s();\n' % gf)
+    fc.writelines('      %s();\n' % gf for gf in genfuncs)
 
     fc.write('''
       return 0;
@@ -334,8 +333,7 @@ def build_event(endian):
     {
     ''')
 
-    for gf in genfuncs:
-        fc.write('      %s();\n' % gf)
+    fc.writelines('      %s();\n' % gf for gf in genfuncs)
 
     fc.write('''
       return 0;
@@ -452,8 +450,7 @@ def gen_func(fc, funcname, structname, outputname, pydef, cdef, vardefs):
             #
             # List of scalars
             #
-            elif isinstance(f.type, rq.ScalarObj) \
-                 or isinstance(f.type, rq.ResourceObj):
+            elif isinstance(f.type, (rq.ScalarObj, rq.ResourceObj)):
 
                 vflen = vardefs[i]
 
@@ -473,7 +470,7 @@ def gen_func(fc, funcname, structname, outputname, pydef, cdef, vardefs):
                     deflen = vflen
                     ctype = 'CARD32'
                 else:
-                    RuntimeError('oops: %s' % f.type.structcode)
+                    raise RuntimeError('oops: %s' % f.type.structcode)
 
                 def rand(x, rmin = rmin, rmax = rmax):
                     return randint(rmin, rmax)
@@ -650,8 +647,7 @@ def gen_func(fc, funcname, structname, outputname, pydef, cdef, vardefs):
         #
         # Keyboard/modifier mappings
         #
-        elif isinstance(f, rq.KeyboardMapping) \
-             or isinstance(f, rq.ModifierMapping):
+        elif isinstance(f, (rq.KeyboardMapping, rq.ModifierMapping)):
 
             if isinstance(f, rq.KeyboardMapping):
                 rmin = 0

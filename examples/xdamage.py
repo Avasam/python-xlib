@@ -27,13 +27,13 @@ import os
 # Change path so we find Xlib
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from Xlib import display, X, threaded,Xutil
+from Xlib import display, X, Xutil
 import time
 
 import _thread
 
 from Xlib.ext import damage
-from PIL import Image, ImageTk
+from PIL import Image
 import traceback
 
 def redraw(win, gc):

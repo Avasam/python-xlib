@@ -82,7 +82,7 @@ def main():
     except (IndexError, ValueError):
         sys.stderr.write('Usage: %s listenport desthost destport\n'
                          % sys.argv[0])
-        exit(1)
+        sys.exit(1)
 
     tcpbug(('', lport), (dhost, dport), 1)
 

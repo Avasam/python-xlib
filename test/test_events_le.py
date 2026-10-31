@@ -1,5 +1,5 @@
 import unittest
-from Xlib.protocol import request, event
+from Xlib.protocol import event
 from . import LittleEndianTest as EndianTest
 from . import DummyDisplay
 

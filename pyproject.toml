@@ -2,6 +2,11 @@
 requires = ["uv_build>=0.13.5,<0.14"]
 build-backend = "uv_build"
 
+[tool.uv.build-backend]
+module-name = "Xlib"
+module-root = ""
+source-include = ["test/*.py"]
+
 [project]
 name = "avasam-python-xlib"
 # `Xlib.__version__` reads this from the installed metadata.
@@ -39,6 +44,7 @@ Upstream = "https://github.com/python-xlib/python-xlib"
 
 [dependency-groups]
 dev = [
+  "ruff",
   # uv does not split the lock on versions a release excludes, and coverage 5 dropped 3.3 and 3.4.
   "coverage<5; python_version < '3.5'",
   "coverage; python_version >= '3.5'",
@@ -49,8 +55,3 @@ exclude-newer = "1 week"
 # Tests run against the source tree. Building the project needs uv_build,
 # which needs Python>=3.8, so it is not installed into the test environments.
 package = false
-
-[tool.uv.build-backend]
-module-name = "Xlib"
-module-root = ""
-source-include = ["test/*.py"]

@@ -29,7 +29,6 @@ import pprint
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from Xlib import X, display, Xutil
-from Xlib.ext import xinerama
 
 # Application window (only one)
 class Window:
@@ -118,7 +117,7 @@ class Window:
 
     def parseModes(self, mode_names, modes):
         lastIdx = 0
-        modedatas = dict()
+        modedatas = {}
         for mode in modes:
             modedata = dict(mode._data)
             modedata['name'] = mode_names[lastIdx:lastIdx + modedata['name_length']]
@@ -128,7 +127,6 @@ class Window:
 
     # Main loop, handling events
     def loop(self):
-        current = None
         while 1:
             e = self.d.next_event()
 

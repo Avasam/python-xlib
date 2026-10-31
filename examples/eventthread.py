@@ -31,7 +31,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import time
 from threading import Thread
 
-from Xlib import Xatom, threaded
+from Xlib import Xatom
 from Xlib.display import Display
 
 
@@ -40,7 +40,7 @@ class EventThread(Thread):
     _stop = None
 
     def __init__(self, display):
-        super(EventThread, self).__init__()
+        super().__init__()
         self.display = display
         self.daemon = True
 

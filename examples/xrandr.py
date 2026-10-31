@@ -133,7 +133,7 @@ class Window(object):
 
     def parseModes(self, mode_names, modes):
         lastIdx = 0
-        modedatas = dict()
+        modedatas = {}
         for mode in modes:
             modedata = dict(mode._data)
             modedata['name'] = mode_names[lastIdx:lastIdx + modedata['name_length']]
@@ -143,7 +143,6 @@ class Window(object):
 
     # Main loop, handling events
     def loop(self):
-        current = None
         while 1:
             e = self.d.next_event()
 

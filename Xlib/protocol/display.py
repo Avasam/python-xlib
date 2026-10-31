@@ -109,7 +109,7 @@ class Display(object):
         # Calculate optimal default buffer size for recv.
         buffer_size = self.socket.getsockopt(socket.SOL_SOCKET,
                                              socket.SO_RCVBUF)
-        buffer_size = math.pow(2, math.floor(math.log(buffer_size, 2)))
+        buffer_size = math.pow(2, math.floor(math.log2(buffer_size)))
         self.recv_buffer_size = int(buffer_size)
 
         # Data used by the send-and-receive loop
@@ -348,12 +348,12 @@ class Display(object):
         self.request_serial = (self.request_serial + 1) % 65536
 
         self.request_queue.append((request, wait_for_response))
-        qlen = len(self.request_queue)
+        # qlen = len(self.request_queue)
 
         self.request_queue_lock.release()
 
-#       if qlen > 10:
-#           self.flush()
+        # if qlen > 10:
+        #     self.flush()
 
     def close_internal(self, whom):
         # Clear out data structures

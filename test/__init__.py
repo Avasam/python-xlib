@@ -131,7 +131,7 @@ class Xvfb(object):
             display_number = pipe.readline().strip().decode()
         if not display_number:
             raise RuntimeError('Xvfb exited before reporting its display')
-        self.saved_environ = dict((name, os.environ.get(name)) for name in ('DISPLAY', 'XAUTHORITY'))
+        self.saved_environ = {name: os.environ.get(name) for name in ('DISPLAY', 'XAUTHORITY')}
         os.environ['DISPLAY'] = ':' + display_number
         os.environ['XAUTHORITY'] = self.authfile
 

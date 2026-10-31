@@ -6,7 +6,7 @@ import os
 # Change path so we find Xlib
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from Xlib import display, X, threaded
+from Xlib import display, X
 import time
 import _thread
 
