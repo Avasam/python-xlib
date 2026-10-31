@@ -1,7 +1,9 @@
 # https://docs.astral.sh/ty/reference/configuration/
 [environment]
 # Oldest Python ty can check for. For editors, since uv can't make venvs that old.
-python-version = "3.7"
+# TODO: Lower to 3.7, ty's own floor, once ty can parse stubs with syntax newer than the target,
+# like `/` for positional-only parameters. https://github.com/astral-sh/ruff/issues/21677
+python-version = "3.8"
 
 [src]
 # Only the public API
@@ -28,15 +30,22 @@ override-of-final-method = "ignore"
 invalid-init-type-variable = "ignore"
 
 ###
-# TODO: Rules that don't pass yet
+# False positives in the implementation
 ###
 
 [[overrides]]
-include = [
-  "Xlib/protocol/display.py",
-  "Xlib/protocol/request.py",
-]
-rules = { invalid-argument-type = "ignore" }
+include = ["**/*.py"]
+[overrides.rules]
+# A class from an implementation and the same class from its stub are different types to ty,
+# so passing one where callers resolved the other fails. https://github.com/astral-sh/ty/issues/1306
+invalid-argument-type = "ignore"
+# Methods can't override an attribute annotated with a `Callable`, like the `rq.Field` hooks.
+# https://github.com/astral-sh/ty/issues/4823
+invalid-mutable-override = "ignore"
+
+###
+# TODO: Rules that don't pass yet
+###
 
 [[overrides]]
 include = [
@@ -60,18 +69,16 @@ rules = { not-iterable = "ignore" }
 
 [[overrides]]
 include = [
+  "Xlib/display.py",
   "Xlib/protocol/display.py",
-  "Xlib/protocol/request.py",
 ]
 rules = { not-subscriptable = "ignore" }
 
 [[overrides]]
 include = [
   "Xlib/__init__.py",
-  "Xlib/ext/nvcontrol.py",
-  "Xlib/ext/record.py",
+  "Xlib/display.py",
   "Xlib/protocol/display.py",
-  "Xlib/protocol/request.py",
   "Xlib/protocol/rq.py",
   "Xlib/xobject/drawable.py",
 ]

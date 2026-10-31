@@ -1,5 +1,6 @@
 // https://github.com/microsoft/pyright/blob/main/docs/configuration.md#sample-config-file
 {
+  // Most basic type-checking possible to reduce initial adoption failures
   "typeCheckingMode": "basic",
   "analyzeUnannotatedFunctions": false,
   // Oldest Python pyright can check for, typeshed only has `typing` from Python 3.5. For editors, since uv can't make venvs that old.
