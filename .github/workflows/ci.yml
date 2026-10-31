@@ -15,6 +15,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  Ruff:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/ruff-action@v4.1.0
+        with:
+          version-file: uv.lock
+
   test:
     name: Python ${{ matrix.python-version }}
     # ARM runners are faster, and every dependency has an arm64 wheel.
@@ -137,7 +148,7 @@ jobs:
 
   release:
     name: Publish GitHub release
-    needs: [test, test-docker]
+    needs: [Ruff, test, test-docker]
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-24.04-arm
     permissions:
