@@ -173,7 +173,8 @@ jobs:
         shell: pwsh
         run: |
           choco install vcxsrv --yes --no-progress
-          Start-Process "$env:ProgramFiles\VcXsrv\vcxsrv.exe" -ArgumentList ':0', '-multiwindow', '-ac'
+          # `-noreset`, as for Xvfb: VcXsrv can crash resetting once the last client disconnects, refusing every later test
+          Start-Process "$env:ProgramFiles\VcXsrv\vcxsrv.exe" -ArgumentList ':0', '-multiwindow', '-ac', '-noreset'
           $deadline = (Get-Date).AddSeconds(30)
           while ($true) {
             try {
