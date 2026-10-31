@@ -332,7 +332,7 @@ class Struct:
     name: str
     check_value: Callable[[Any], Any] | None
     keyword_args: bool
-    fields: tuple[Field]
+    fields: tuple[Field, ...]
     static_codes: str
     static_values: int
     static_fields: list[Field]
