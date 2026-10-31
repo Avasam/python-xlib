@@ -99,6 +99,7 @@ type-checking = [
   # PIL used by examples
   "pillow>=10.3; python_version >= '3.10'", # First release with its own types
   "types-pillow; python_version < '3.10'",
+  "packaging; python_version >= '3.8'", # Used by utils/run_checkers.py, which runs on Python 3.11+
 ]
 # Type checkers run on a recent Python, whatever version they check for.
 # W/o the markers, the lock picks ancient releases for the Pythons they don't install on.

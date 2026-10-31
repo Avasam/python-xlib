@@ -27,7 +27,7 @@ array_unsigned_codes: Final[dict[int, LiteralString]]
 struct_to_array_codes: Final[dict[str, LiteralString]]
 
 class Field:
-    name: str
+    name: str | None
     default: int | None
     pack_value: Callable[[Any], tuple[Any, int | None, int | None]] | None
     structcode: str | None
@@ -233,6 +233,7 @@ class FixedList(List):
 class Object(ValueField):
     type: Struct
     structcode: str | None
+    default: tuple[object, ...] | dict[str, Any] | DictWrapper | None  # type: ignore[assignment]  # Actually different from base class
     def __init__(
         self, name: str, type: Struct, default: tuple[object, ...] | dict[str, Any] | DictWrapper | None = None
     ) -> None: ...
@@ -322,7 +323,7 @@ ColormapObj: ResourceObj
 
 class StrClass:
     structcode: None
-    def pack_value(self, val: str) -> bytes: ...
+    def pack_value(self, val: str | bytes) -> bytes: ...
     def parse_binary(self, data: bytes | bytearray, display: Unused) -> tuple[str, bytes | bytearray]: ...
 
 Str: StrClass

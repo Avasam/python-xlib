@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.11"
-# dependencies = []
+# dependencies = ["packaging"]
 # ///
 """Runs Ruff, each type checker for the oldest and newest Python it checks for, and stubtest, like CI does.
 
@@ -18,6 +18,8 @@ import sys
 import tomllib
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+
+from packaging.requirements import Requirement
 
 ROOT = Path(__file__).resolve().parent.parent
 # `uv run` points this to the script's own environment, which would make every nested `uv run` warn
@@ -40,8 +42,9 @@ STUBTEST = (
 
 
 def run(*command: str) -> str:
+    # stderr goes to the terminal, so a failure shows why
     return subprocess.run(
-        command, cwd=ROOT, env=ENV, check=True, capture_output=True, text=True
+        command, cwd=ROOT, env=ENV, check=True, stdout=subprocess.PIPE, text=True
     ).stdout
 
 
@@ -57,35 +60,33 @@ def newest_python() -> str:
     return f"{major}.{minor}"
 
 
-def mypy_python_bounds(prefix: str) -> list[tuple[str, str]]:
-    """The Pythons a mypy from the lock file installs on, from its marker in pyproject.toml.
+def mypy_minors(newest: str) -> tuple[list[int], list[int]]:
+    """The Python 3 minor versions the old and the new mypy install on, from their markers in pyproject.toml.
 
-    `prefix` starts the requirement, spaces removed. For example, the `mypy<` requirement with
-    `python_version >= '3.8' and python_version < '3.10'` becomes `[(">=", "3.8"), ("<", "3.10")]`.
+    For example, `mypy<1.6; python_version >= '3.8' and python_version < '3.10'` installs on `[8, 9]`.
     """
     with (ROOT / "pyproject.toml").open("rb") as file:
         group = tomllib.load(file)["dependency-groups"]["mypy"]
-    for requirement in group:
-        if isinstance(requirement, str) and requirement.replace(" ", "").startswith(prefix):
-            bounds = re.findall(
-                r"python_version\s*([<>=!]+)\s*['\"]([\d.]+)['\"]", requirement.partition(";")[2]
+    newest_minor = int(newest.split(".")[1])
+    minors = sorted(
+        [
+            minor
+            for minor in range(newest_minor + 1)
+            if requirement.marker is None
+            or requirement.marker.evaluate(
+                {"python_version": f"3.{minor}", "python_full_version": f"3.{minor}.0"}
             )
-            if bounds:
-                return bounds
-    sys.exit(
-        f"error: no `{prefix}` requirement with a `python_version` marker"
-        " in the `mypy` group of pyproject.toml"
+        ]
+        for requirement in map(Requirement, filter(lambda entry: isinstance(entry, str), group))
+        if requirement.name == "mypy"
     )
-
-
-def old_mypy_python() -> str:
-    """The Pythons the old mypy installs on, like `>=3.8,<3.10`."""
-    return ",".join(operator + version for operator, version in mypy_python_bounds("mypy<"))
-
-
-def new_mypy_oldest_python() -> str:
-    """The oldest Python the newest mypy installs on, like `3.10`."""
-    return next(version for operator, version in mypy_python_bounds("mypy;") if operator == ">=")
+    if len(minors) != 2 or not all(minors):
+        sys.exit(
+            "error: the `mypy` group of pyproject.toml needs one old and one new `mypy` requirement,"
+            f" each installable on Python 3.0 to {newest}"
+        )
+    old, new = minors
+    return old, new
 
 
 def isolated_mypy(python: str) -> tuple[str, ...]:
@@ -103,7 +104,8 @@ def check(command: tuple[str, ...]) -> tuple[int, bytes]:
 
 def main() -> int:
     newest = newest_python()
-    old_mypy = isolated_mypy(old_mypy_python())
+    old_mypy_minors, new_mypy_minors = mypy_minors(newest)
+    old_mypy = isolated_mypy(f">=3.{old_mypy_minors[0]},<3.{old_mypy_minors[-1] + 1}")
     oldest_mypy = run(
         *old_mypy,
         "python",
@@ -112,7 +114,7 @@ def main() -> int:
     ).strip()
     # Compares the stubs with the runtime of the Python it runs on, not a `--python-version`.
     # The old mypy can't: it checks for Python 3.8 with a typeshed that lacks what `Xlib/_typing.pyi` imports there.
-    oldest_stubtest = new_mypy_oldest_python()
+    oldest_stubtest = f"3.{new_mypy_minors[0]}"
 
     checks = {
         # `--level=warning` hides one "Analysis of function is skipped because it is unannotated" per untyped function
