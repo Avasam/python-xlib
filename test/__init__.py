@@ -73,10 +73,8 @@ class LittleEndianTest(TestCase):
 
 
 def tohex(bin):
-    hex = []
-    for i in range(0, len(bin), 16):
-        hex.append(str(binascii.hexlify(bin[i:i+16])) + '\n')
-    return hex
+    return [str(binascii.hexlify(bin[i:i+16])) + '\n'
+            for i in range(0, len(bin), 16)]
 
 def bindiff(bin1, bin2):
     hex1 = tohex(bin1)
@@ -131,7 +129,7 @@ class Xvfb(object):
             display_number = pipe.readline().strip().decode()
         if not display_number:
             raise RuntimeError('Xvfb exited before reporting its display')
-        self.saved_environ = dict((name, os.environ.get(name)) for name in ('DISPLAY', 'XAUTHORITY'))
+        self.saved_environ = {name: os.environ.get(name) for name in ('DISPLAY', 'XAUTHORITY')}
         os.environ['DISPLAY'] = ':' + display_number
         os.environ['XAUTHORITY'] = self.authfile
 

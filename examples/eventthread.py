@@ -40,7 +40,7 @@ class EventThread(Thread):
     _stop = None
 
     def __init__(self, display):
-        super(EventThread, self).__init__()
+        super().__init__()
         self.display = display
         self.daemon = True
 

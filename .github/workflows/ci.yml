@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [master, avasam-python-xlib]
+    branches: [avasam-python-xlib]
     tags: ['*']
   pull_request:
   workflow_dispatch:
@@ -15,6 +15,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  Ruff:
+    runs-on: ubuntu-24.04-arm
+    env:
+      RUFF_OUTPUT_FORMAT: github
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@v10.3.3
+      - run: uv run --locked --only-group=ruff ruff check
+
   test:
     name: Python ${{ matrix.python-version }}
     # ARM runners are faster, and every dependency has an arm64 wheel.
@@ -45,7 +57,7 @@ jobs:
 
       - name: Run tests under Xvfb
         run: |
-          uv sync --locked
+          uv sync --locked --no-default-groups --group test
           coverage run -m unittest -v
           coverage report > coverage.txt
           coverage html
@@ -109,7 +121,7 @@ jobs:
 
       - name: Run tests under Xvfb in Docker
         run: |
-          uv export --locked --no-emit-project --output-file "$RUNNER_TEMP/requirements.txt"
+          uv export --locked --no-emit-project --no-default-groups --group test --output-file "$RUNNER_TEMP/requirements.txt"
           docker run --rm \
             ${{ matrix.platform != 'native' && format('--platform=linux/{0}', matrix.platform) || '' }} \
             --env PYTHONDEVMODE \
@@ -137,7 +149,7 @@ jobs:
 
   release:
     name: Publish GitHub release
-    needs: [test, test-docker]
+    needs: [Ruff, test, test-docker]
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-24.04-arm
     permissions:

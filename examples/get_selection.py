@@ -29,7 +29,7 @@ import os
 # Change path so we find Xlib
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from Xlib import X, display, Xutil, Xatom
+from Xlib import X, display, Xatom
 
 
 def log(msg, *args):

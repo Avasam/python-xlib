@@ -24,6 +24,9 @@
 # definition modules in the Xlib/keysymdef directory.
 
 from Xlib.X import NoSymbol
+from Xlib.keysymdef.miscellany import (
+    XK_BackSpace, XK_Tab, XK_Clear, XK_Return,
+    XK_Pause, XK_Scroll_Lock, XK_Escape, XK_Delete)
 
 def string_to_keysym(keysym):
     '''Return the (16 bit) numeric code of keysym.

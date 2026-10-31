@@ -2,6 +2,11 @@
 requires = ["uv_build>=0.13.5,<0.14"]
 build-backend = "uv_build"
 
+[tool.uv.build-backend]
+module-name = "Xlib"
+module-root = ""
+source-include = ["test/*.py"]
+
 [project]
 name = "avasam-python-xlib"
 # `Xlib.__version__` reads this from the installed metadata.
@@ -38,10 +43,18 @@ Issues = "https://github.com/Avasam/python-xlib/issues"
 Upstream = "https://github.com/python-xlib/python-xlib"
 
 [dependency-groups]
-dev = [
+ruff = [
+  "beslogic-ruff-config @ git+https://github.com/BesLogic/Beslogic-Ruff-Config@2026.10.31",
+  "ruff", # Version should come from beslogic-ruff-config and the lock file
+]
+test = [
   # uv does not split the lock on versions a release excludes, and coverage 5 dropped 3.3 and 3.4.
   "coverage<5; python_version < '3.5'",
   "coverage; python_version >= '3.5'",
+]
+dev = [
+  { include-group = "ruff" },
+  { include-group = "test" }
 ]
 
 [tool.uv]
@@ -50,7 +63,6 @@ exclude-newer = "1 week"
 # which needs Python>=3.8, so it is not installed into the test environments.
 package = false
 
-[tool.uv.build-backend]
-module-name = "Xlib"
-module-root = ""
-source-include = ["test/*.py"]
+# Ruff only ships wheels for Python>=3.7. Without this, the lock picks an unbuildable 2022 sdist for older Pythons.
+[tool.uv.dependency-groups]
+ruff = { requires-python = ">=3.7" }

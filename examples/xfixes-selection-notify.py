@@ -25,7 +25,6 @@
 
 import sys
 import os
-import time
 
 # Change path so we find Xlib
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))

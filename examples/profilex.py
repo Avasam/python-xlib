@@ -9,7 +9,7 @@ import os
 # Change path so we find Xlib
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from Xlib import X, display, Xatom
+from Xlib import display, Xatom
 
 import profile
 

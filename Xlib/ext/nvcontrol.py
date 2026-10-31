@@ -337,7 +337,7 @@ def _displaystr2num(st):
                 if 0 <= curnum <= 7:
                     num = n + curnum
                     break
-            except Exception:
+            except ValueError:
                 pass
     if num is not None:
         return num

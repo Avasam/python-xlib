@@ -719,7 +719,7 @@ class Window(Drawable):
     def set_wm_colormap_windows(self, windows, onerror = None):
         self.change_property(self.display.get_atom('WM_COLORMAP_WINDOWS'),
                              Xatom.WINDOW, 32,
-                             map(lambda w: w.id, windows),
+                             [w.id for w in windows],
                              onerror = onerror)
 
     def get_wm_colormap_windows(self):
@@ -740,7 +740,7 @@ class Window(Drawable):
     def get_wm_client_machine(self):
         return self.get_full_text_property(Xatom.WM_CLIENT_MACHINE, Xatom.STRING)
 
-    def set_wm_normal_hints(self, hints = {}, onerror = None, **keys):
+    def set_wm_normal_hints(self, hints = None, onerror = None, **keys):
         self._set_struct_prop(Xatom.WM_NORMAL_HINTS, Xatom.WM_SIZE_HINTS,
                               icccm.WMNormalHints, hints, keys, onerror)
 
@@ -748,7 +748,7 @@ class Window(Drawable):
         return self._get_struct_prop(Xatom.WM_NORMAL_HINTS, Xatom.WM_SIZE_HINTS,
                                      icccm.WMNormalHints)
 
-    def set_wm_hints(self, hints = {}, onerror = None, **keys):
+    def set_wm_hints(self, hints = None, onerror = None, **keys):
         self._set_struct_prop(Xatom.WM_HINTS, Xatom.WM_HINTS,
                               icccm.WMHints, hints, keys, onerror)
 
@@ -756,7 +756,7 @@ class Window(Drawable):
         return self._get_struct_prop(Xatom.WM_HINTS, Xatom.WM_HINTS,
                                      icccm.WMHints)
 
-    def set_wm_state(self, hints = {}, onerror = None, **keys):
+    def set_wm_state(self, hints = None, onerror = None, **keys):
         atom = self.display.get_atom('WM_STATE')
         self._set_struct_prop(atom, atom, icccm.WMState, hints, keys, onerror)
 
@@ -764,7 +764,7 @@ class Window(Drawable):
         atom = self.display.get_atom('WM_STATE')
         return self._get_struct_prop(atom, atom, icccm.WMState)
 
-    def set_wm_icon_size(self, hints = {}, onerror = None, **keys):
+    def set_wm_icon_size(self, hints = None, onerror = None, **keys):
         self._set_struct_prop(Xatom.WM_ICON_SIZE, Xatom.WM_ICON_SIZE,
                               icccm.WMIconSize, hints, keys, onerror)
 
@@ -793,7 +793,7 @@ class Window(Drawable):
     def _set_struct_prop(self, pname, ptype, pstruct, hints, keys, onerror):
         if isinstance(hints, rq.DictWrapper):
             keys.update(hints._data)
-        else:
+        elif hints is not None:
             keys.update(hints)
 
         value = pstruct.to_binary(*(), **keys)

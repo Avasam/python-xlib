@@ -385,7 +385,7 @@ class Display(object):
         lowest index and secondarily on the lowest keycode."""
         try:
             # Copy the map list, reversing the arguments
-            return map(lambda x: (x[1], x[0]), self._keymap_syms[keysym])
+            return [(x[1], x[0]) for x in self._keymap_syms[keysym]]
         except KeyError:
             return []
 
@@ -406,7 +406,7 @@ class Display(object):
         # Delete all sym->code maps for the changed codes
 
         lastcode = first_keycode + count
-        for keysym, codes in self._keymap_syms.items():
+        for codes in self._keymap_syms.values():
             i = 0
             while i < len(codes):
                 code = codes[i][1]
@@ -947,4 +947,4 @@ hosts
                             onerror = onerror)
 
 # Late import because of circular dependency
-from . import error
+from . import error  # noqa: E402

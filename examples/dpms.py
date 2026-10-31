@@ -22,6 +22,7 @@
 #    Boston, MA 02111-1307 USA
 
 import random
+import sys
 import time
 
 from Xlib import display
@@ -32,8 +33,8 @@ class DPMSExamples(object):
     def __init__(self):
         self.d = display.Display()
 
-        capable = self.d.dpms_capable()
-        assert capable, 'DPMS is not supported in your system'
+        if not self.d.dpms_capable():
+            sys.exit('DPMS is not supported in your system')
 
         self.initial_info = self.d.dpms_info()
         self.initial_timeouts = self.d.dpms_get_timeouts()

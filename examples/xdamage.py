@@ -27,13 +27,13 @@ import os
 # Change path so we find Xlib
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from Xlib import display, X, threaded,Xutil
+from Xlib import display, X, threaded, Xutil
 import time
 
 import _thread
 
 from Xlib.ext import damage
-from PIL import Image, ImageTk
+from PIL import Image
 import traceback
 
 def redraw(win, gc):
@@ -55,7 +55,7 @@ def get_image_from_win(win, pt_w, pt_h, pt_x=0, pt_y=0):
         image = Image.frombytes("RGB", (pt_w, pt_h), raw.data, "raw", "BGRX")
         return image
 
-    except Exception:
+    except Exception:  # noqa: BLE001 # Printed, demo keeps running on any capture failure
         traceback.print_exc()
 
 def check_ext(disp):

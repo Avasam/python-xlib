@@ -1,6 +1,7 @@
 import os
 import unittest
 
+import Xlib.XK
 import Xlib.display
 import Xlib.error
 import Xlib.protocol.display
@@ -72,6 +73,11 @@ class TestXlibDisplay(unittest.TestCase):
 
     def test_default_screen_count(self):
         self.assertEqual(self.display.screen_count(), 1)
+
+    def test_keysym_to_keycodes_is_list(self):
+        keycodes = self.display.keysym_to_keycodes(Xlib.XK.XK_a)
+        self.assertIsInstance(keycodes, list)
+        self.assertTrue(keycodes)
 
     def test_cannot_add_existing_display_method(self):
         self.assertRaises(AssertionError, self.display.extension_add_method,

@@ -23,7 +23,7 @@ class SK:
 class KIND(rq.Set):
 
     def __init__(self, name):
-        super(KIND, self).__init__(name, 1,
+        super().__init__(name, 1,
                                    values=(SK.Bounding,
                                            SK.Clip,
                                            SK.Input))

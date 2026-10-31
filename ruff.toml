@@ -1,0 +1,125 @@
+# Installed by `uv sync --group ruff`. Assumes the default `.venv` location.
+extend = ".venv/Beslogic-Ruff-Config/ruff.toml"
+preview = false
+# Ruff can't infer from `requires-python = ">=3.3"` (below its minimum),
+# and would otherwise default to Python 3.10+. See: https://github.com/astral-sh/ruff/issues/8832
+target-version = "py37"
+
+[lint]
+ignore = [
+  ###
+  # Rules that go against this project's conventions
+  # These are rules we'd disable even if we had no concerns of reducing diff with upstream
+  ###
+  "PT", # flake8-pytest-style: tests use `unittest`, not pytest
+  "S311", # suspicious-non-cryptographic-random-usage: no cryptography, `random` only drives test data and demos
+  "T20", # flake8-print: output goes through `print`, not `logging`
+
+  ###
+  # Rules that have no performance or correctness impact whatsoever, so we reduce churn in this fork
+  # Rules here WOULD have been acceptable, if starting the project fresh. Only add existing failures
+  ###
+  "A001", # builtin-variable-shadowing
+  "A002", # builtin-argument-shadowing: renaming breaks keyword callers
+  "ARG001", # unused-function-argument: renaming breaks callers and callbacks
+  "ARG005", # unused-lambda-argument
+  "B007", # unused-loop-control-variable
+  "B904", # raise-without-from-inside-except: cosmetic, Python 3 already chains via `__context__`
+  "C901", # complex-structure
+  "COM819", # prohibited-trailing-comma
+  "D", # pydocstyle
+  "E401", # multiple-imports-on-one-line
+  "E501", # line-too-long
+  "E701", # multiple-statements-on-one-line-colon
+  "E703", # useless-semicolon
+  "E713", # not-in-test: same bytecode
+  "E741", # ambiguous-variable-name
+  "FBT002", # boolean-default-value-positional-argument: making it keyword-only breaks positional callers
+  "I001", # unsorted-imports
+  "ISC001", # single-line-implicit-string-concatenation
+  "ISC002", # multi-line-implicit-string-concatenation
+  "N801", # invalid-class-name
+  "N802", # invalid-function-name
+  "N806", # non-lowercase-variable-in-function
+  "N812", # lowercase-imported-as-non-lowercase
+  "N816", # mixed-case-variable-in-global-scope
+  "N818", # error-suffix-on-exception-name
+  "PIE790", # unnecessary-placeholder
+  "PIE808", # unnecessary-range-start
+  "PLR0912", # too-many-branches
+  "PLR0913", # too-many-arguments
+  "PLR0915", # too-many-statements
+  "PLR0917", # too-many-positional-arguments
+  "PLR5501", # collapsible-else-if
+  "PLW0120", # useless-else-on-loop
+  "PLW1641", # eq-without-hash: `__hash__ = None` is already default, and type checkers know it
+  "PLW2901", # redefined-loop-name
+  "Q", # flake8-quotes
+  "RET501", # unnecessary-return-none
+  "RET503", # implicit-return
+  "RET504", # unnecessary-assign
+  "RET505", # superfluous-else-return
+  "RET507", # superfluous-else-continue
+  "RET508", # superfluous-else-break
+  "RUF021", # parenthesize-chained-operators
+  "RUF022", # unsorted-dunder-all
+  "RUF059", # unused-unpacked-variable
+  "SIM102", # collapsible-if
+  "SIM108", # if-else-block-instead-of-if-exp
+  "SIM114", # if-with-same-arms
+  "TD004", # missing-todo-colon
+  "TD005", # missing-todo-description
+  "TID252", # relative-imports
+  "TRY300", # try-consider-else
+  "UP004", # useless-object-inheritance
+  "UP015", # redundant-open-modes
+  "UP024", # os-error-alias: already the same class since Python 3.3
+  "UP025", # unicode-kind-prefix
+  "UP030", # format-literals
+  "W191", # tab-indentation
+  "W291", # trailing-whitespace
+  "W293", # blank-line-with-whitespace
+
+  ###
+  # Rules that would have a negative performance impact
+  ###
+  "PLC0415", # import-outside-top-level: lazy and version-gated imports keep `import Xlib` fast
+  "PLR1730", # if-stmt-min-max: builtin call is slower than the comparison
+  "SIM208", # double-negation: Autofix drops the `bool` coercion, and `bool()` is slower than `not not`
+  "UP031", # printf-string-formatting: `%` is faster than `str.format`
+
+  ###
+  # Rules that are flagged and would break Python 3.3
+  ###
+  "PTH", # flake8-use-pathlib: `pathlib` is Python 3.4+
+  "RUF005", # collection-literal-concatenation: iterable unpacking in displays is Python 3.5+
+  "RUF012", # mutable-class-default: `typing.ClassVar` annotations are Python 3.6+ syntax
+  "UP032", # f-string: Python 3.6+
+  "UP036", # outdated-version-block: https://github.com/astral-sh/ruff/issues/8832
+]
+
+[lint.per-file-ignores]
+"Xlib/**" = [
+  "N999", # invalid-module-name: renaming would break the public API
+]
+"test/**" = [
+  "S", # Tests and generator only run trusted, local commands
+]
+
+[lint.flake8-self]
+# Protocol framework members shared across `rq`, `protocol`, `ext`, and their users
+extend-ignore-names = [
+  "_binary",
+  "_code",
+  "_data",
+  "_parse_response",
+  "_reply",
+  "_request",
+  "_serial",
+  "_set_error",
+  "_success_reply",
+]
+
+[lint.pyflakes]
+# Imported for its side effect of swapping in real thread locks
+allowed-unused-imports = ["Xlib.threaded"]

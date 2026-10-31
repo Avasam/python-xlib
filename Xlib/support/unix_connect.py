@@ -23,6 +23,7 @@ import re
 import os
 import platform
 import socket
+import subprocess
 from Xlib import error, xauth
 
 
@@ -47,8 +48,8 @@ def get_display(display):
     if 'darwin' in SUPPORTED_PROTOCOLS:
         re_list.insert(0, (DARWIN_DISPLAY_RE, {'protocol': 'darwin'}))
 
-    for re, defaults in re_list:
-        m = re.match(display)
+    for display_re, defaults in re_list:
+        m = display_re.match(display)
         if m is not None:
             protocol, host, dno, screen = [
                 m.groupdict().get(field, defaults.get(field))
@@ -92,6 +93,7 @@ def _get_unix_socket(address):
 
 
 def get_socket(dname, protocol, host, dno):
+    # ruff: ignore[S101] # Invariant, `get_display` only parses supported protocols
     assert protocol in SUPPORTED_PROTOCOLS
     try:
         # Darwin funky socket.
@@ -104,6 +106,7 @@ def get_socket(dname, protocol, host, dno):
 
         # Unix socket.
         else:
+            # ruff: ignore[S108] # Standard X11 socket path, not a temp file
             address = '/tmp/.X11-unix/X%d' % dno
             if not os.path.exists(address):
                 # Use abstract address.
@@ -152,6 +155,7 @@ def _ensure_not_inheritable(sock):
 
 
 def new_get_auth(sock, dname, protocol, host, dno):
+    # ruff: ignore[S101] # Invariant, `get_display` only parses supported protocols
     assert protocol in SUPPORTED_PROTOCOLS
     # Translate socket address into the xauth domain
     if protocol == 'darwin':
@@ -199,7 +203,12 @@ def old_get_auth(sock, dname, host, dno):
     try:
         # We could parse .Xauthority, but xauth is simpler
         # although more inefficient
-        data = os.popen('xauth list %s 2>/dev/null' % dname).read()
+        data = subprocess.Popen(  # noqa: S603 # Argument list, no shell: `dname` can't inject
+            ['xauth', 'list', dname],  # noqa: S607 # `xauth` is resolved through `PATH`, as the shell did before
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            universal_newlines=True,
+        ).communicate()[0]
 
         # If there's a cookie, it is of the format
         #      DISPLAY SCHEME COOKIE

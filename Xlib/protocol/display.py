@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Xlib.protocol.display -- core display communication
 #
@@ -109,7 +108,7 @@ class Display(object):
         # Calculate optimal default buffer size for recv.
         buffer_size = self.socket.getsockopt(socket.SOL_SOCKET,
                                              socket.SO_RCVBUF)
-        buffer_size = math.pow(2, math.floor(math.log(buffer_size, 2)))
+        buffer_size = math.pow(2, math.floor(math.log2(buffer_size)))
         self.recv_buffer_size = int(buffer_size)
 
         # Data used by the send-and-receive loop
@@ -348,12 +347,12 @@ class Display(object):
         self.request_serial = (self.request_serial + 1) % 65536
 
         self.request_queue.append((request, wait_for_response))
-        qlen = len(self.request_queue)
+        # qlen = len(self.request_queue)
 
         self.request_queue_lock.release()
 
-#       if qlen > 10:
-#           self.flush()
+        # if qlen > 10:
+        #     self.flush()
 
     def close_internal(self, whom):
         # Clear out data structures
@@ -869,20 +868,18 @@ class Display(object):
             return None
 
         # Normalize sequence numbers, even if they have wrapped.
-        # This ensures that
+        # This ensures that, with last_serial being self.request_serial
+        # plus 65536 if the serials wrapped since the oldest sent request,
         #   sno <= last_serial
         # and
         #   self.sent_requests[0]._serial <= last_serial
 
         if self.sent_requests[0]._serial > self.request_serial:
-            last_serial = self.request_serial + 65536
             if sno < self.request_serial:
                 sno = sno + 65536
 
-        else:
-            last_serial = self.request_serial
-            if sno > self.request_serial:
-                sno = sno - 65536
+        elif sno > self.request_serial:
+            sno = sno - 65536
 
         # No matching events at all
         if sno < self.sent_requests[0]._serial:

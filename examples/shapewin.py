@@ -140,7 +140,6 @@ class Window(object):
 
     # Main loop, handling events
     def loop(self):
-        current = None
         while 1:
             e = self.d.next_event()
 

@@ -73,10 +73,9 @@ class XError(rq.GetAttrData, Exception):
         self._data, _ = self._fields.parse_binary(data, display, rawdict = True)
 
     def __str__(self):
-        s = []
-        for f in ('code', 'resource_id', 'sequence_number',
-                  'major_opcode', 'minor_opcode'):
-            s.append('{0} = {1}'.format(f, self._data[f]))
+        s = ['{0} = {1}'.format(f, self._data[f])
+             for f in ('code', 'resource_id', 'sequence_number',
+                       'major_opcode', 'minor_opcode')]
 
         return '{0}: {1}'.format(self.__class__, ', '.join(s))
 
