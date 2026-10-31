@@ -134,3 +134,8 @@ allow-multiline = false
 [lint.flake8-type-checking]
 quote-annotations = true
 
+
+# https://docs.astral.sh/ruff/settings/#lint_pyflakes_allowed-unused-imports
+[lint.pyflakes]
+# Imported for its side effect of swapping in real thread locks
+allowed-unused-imports = ["Xlib.threaded"]
