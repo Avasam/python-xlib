@@ -72,7 +72,7 @@ def main():
             f = open(args[0], 'rb')
             del args[0]
         else:
-            f = sys.stdin
+            f = sys.stdin.buffer
 
         # Limit selection size to avoid implementing INCR
         data = f.read(MAX_SIZE)
