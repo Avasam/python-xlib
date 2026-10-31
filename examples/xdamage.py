@@ -120,6 +120,8 @@ def main():
                 redraw(window1, gc)
         elif event.type == d.extension_event.DamageNotify:
             image = get_image_from_win(window1, event.area.width, event.area.height, event.area.x, event.area.y)
+            if image is None:
+                continue
             bgpm = window2.create_pixmap(image.width, image.height, d.screen().root_depth)
             bggc = window2.create_gc(foreground=0, background=0)
             bgpm.put_pil_image(bggc, 0, 0, image)
