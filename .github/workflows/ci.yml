@@ -13,11 +13,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  FORCE_COLOR: 1
+  RUFF_OUTPUT_FORMAT: github
+  TY_OUTPUT_FORMAT: github
+
 jobs:
   Ruff:
     runs-on: ubuntu-24.04-arm
-    env:
-      RUFF_OUTPUT_FORMAT: github
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -25,6 +28,70 @@ jobs:
 
       - uses: astral-sh/setup-uv@v10.3.3
       - run: uv run --locked --only-group=ruff ruff check
+
+  # Type checkers run on a recent Python, and check for the oldest Python they support and the newest.
+  mypy:
+    name: mypy (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-24.04-arm
+    env:
+      # mypy only colors its output when it finds the terminal's capabilities
+      TERM: xterm-256color
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # On this Python, the `mypy` group installs the mypy that can check for Python 3.4. See pyproject.toml.
+          - python-version: '3.4'
+            uv-python: '3.9'
+          - python-version: '3.15'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          python-version: ${{ matrix.uv-python }}
+      - run: uv run --locked --only-group=mypy mypy --python-version=${{ matrix.python-version }}
+
+  pyright:
+    name: pyright (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-24.04-arm
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.5', '3.15']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          activate-environment: true
+      - run: uv sync --locked --only-group=pyright
+      - uses: jakebailey/pyright-action@8ec14b5cfe41f26e5f41686a31eb6012758217ef # v3.0.2
+        with:
+          # The version from the lock file
+          version: PATH
+          python-version: ${{ matrix.python-version }}
+          # Hides one "Analysis of function is skipped because it is unannotated" per untyped function
+          level: warning
+
+  ty:
+    name: ty (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-24.04-arm
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.7', '3.15']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@v10.3.3
+      - run: uv run --locked --only-group=ty ty check --python-version=${{ matrix.python-version }}
 
   test:
     name: Python ${{ matrix.python-version }} (${{ matrix.os }})

@@ -82,18 +82,43 @@ Issues = "https://github.com/Avasam/python-xlib/issues"
 Upstream = "https://github.com/python-xlib/python-xlib"
 
 [dependency-groups]
+# Ruff only ships wheels for Python>=3.7. W/o the markers, the lock picks an unbuildable 2022 sdist for older Pythons.
 ruff = [
-  "beslogic-ruff-config @ git+https://github.com/BesLogic/Beslogic-Ruff-Config@2026.10.31",
-  "ruff", # Version should come from beslogic-ruff-config and the lock file
+  "beslogic-ruff-config @ git+https://github.com/BesLogic/Beslogic-Ruff-Config@2026.10.31 ; python_version >= '3.7'",
+  "ruff; python_version >= '3.7'", # Version should come from beslogic-ruff-config and the lock file
 ]
 test = [
   # uv does not split the lock on versions a release excludes, and coverage 5 dropped 3.3 and 3.4.
   "coverage<5; python_version < '3.5'",
   "coverage; python_version >= '3.5'",
 ]
+# Third-party imports the type checkers need to resolve.
+# uv only reads the lower bound of `requires-python`, so w/o the markers, it picks releases that exclude Python 3.3 and 3.4.
+type-checking = [
+  "importlib-metadata; python_version >= '3.5'", # Only a dependency on Python 3.6 and 3.7
+]
+# Type checkers run on a recent Python, whatever version they check for.
+# W/o the markers, the lock picks ancient releases for the Pythons they don't install on.
+mypy = [
+  # The newest mypy that can check for Python 3.4. mypy 2 only checks for Python 3.10 and newer.
+  "mypy<1.6; python_version >= '3.8' and python_version < '3.10'",
+  "mypy; python_version >= '3.10'",
+  { include-group = "type-checking" },
+]
+pyright = [
+  "pyright; python_version >= '3.7'",
+  { include-group = "type-checking" },
+]
+ty = [
+  "ty; python_version >= '3.8'",
+  { include-group = "type-checking" },
+]
 dev = [
+  { include-group = "mypy" },
+  { include-group = "pyright" },
   { include-group = "ruff" },
-  { include-group = "test" }
+  { include-group = "test" },
+  { include-group = "ty" },
 ]
 
 [tool.uv]
@@ -101,7 +126,3 @@ exclude-newer = "1 week"
 # Tests run against the source tree. Building the project needs uv_build,
 # which needs Python>=3.8, so it is not installed into the test environments.
 package = false
-
-# Ruff only ships wheels for Python>=3.7. Without this, the lock picks an unbuildable 2022 sdist for older Pythons.
-[tool.uv.dependency-groups]
-ruff = { requires-python = ">=3.7" }

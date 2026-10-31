@@ -31,7 +31,7 @@ def _get_version_string():
     else:
         try:
             # Backport, only a dependency on Python 3.6 and 3.7
-            from importlib_metadata import PackageNotFoundError, version  # type: ignore[import-not-found]
+            from importlib_metadata import PackageNotFoundError, version
         except ImportError:
             return '0+unknown'
     try:

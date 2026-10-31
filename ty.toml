@@ -1,0 +1,65 @@
+# https://docs.astral.sh/ty/reference/configuration/
+[environment]
+# Oldest Python ty can check for. For editors, since uv can't make venvs that old.
+python-version = "3.7"
+
+[src]
+# Only the public API
+include = ["Xlib"]
+
+###
+# TODO: Rules that don't pass yet
+###
+
+[[overrides]]
+include = [
+  "Xlib/protocol/display.py",
+  "Xlib/protocol/request.py",
+]
+rules = { invalid-argument-type = "ignore" }
+
+[[overrides]]
+include = [
+  "Xlib/display.py",
+  "Xlib/protocol/display.py",
+  "Xlib/threaded.py",
+]
+rules = { invalid-assignment = "ignore" }
+
+[[overrides]]
+include = ["Xlib/ext/xinput.py"]
+rules = { invalid-method-override = "ignore" }
+
+[[overrides]]
+include = ["Xlib/protocol/display.py"]
+rules = { invalid-raise = "ignore" }
+
+[[overrides]]
+include = ["Xlib/protocol/display.py"]
+rules = { not-iterable = "ignore" }
+
+[[overrides]]
+include = [
+  "Xlib/protocol/display.py",
+  "Xlib/protocol/request.py",
+]
+rules = { not-subscriptable = "ignore" }
+
+[[overrides]]
+include = [
+  "Xlib/__init__.py",
+  "Xlib/ext/nvcontrol.py",
+  "Xlib/ext/record.py",
+  "Xlib/protocol/display.py",
+  "Xlib/protocol/request.py",
+  "Xlib/protocol/rq.py",
+  "Xlib/xobject/drawable.py",
+]
+rules = { unresolved-attribute = "ignore" }
+
+[[overrides]]
+include = [
+  "Xlib/protocol/display.py",
+  "Xlib/protocol/rq.py",
+]
+rules = { unsupported-operator = "ignore" }
