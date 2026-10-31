@@ -45,7 +45,7 @@ jobs:
 
       - name: Run tests under Xvfb
         run: |
-          uv sync --locked
+          uv sync --locked --no-default-groups --group test
           coverage run -m unittest -v
           coverage report > coverage.txt
           coverage html
@@ -109,7 +109,7 @@ jobs:
 
       - name: Run tests under Xvfb in Docker
         run: |
-          uv export --locked --no-emit-project --output-file "$RUNNER_TEMP/requirements.txt"
+          uv export --locked --no-emit-project --no-default-groups --group test --output-file "$RUNNER_TEMP/requirements.txt"
           docker run --rm \
             ${{ matrix.platform != 'native' && format('--platform=linux/{0}', matrix.platform) || '' }} \
             --env PYTHONDEVMODE \

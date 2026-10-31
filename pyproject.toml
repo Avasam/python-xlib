@@ -43,11 +43,15 @@ Issues = "https://github.com/Avasam/python-xlib/issues"
 Upstream = "https://github.com/python-xlib/python-xlib"
 
 [dependency-groups]
-dev = [
-  "ruff",
+lint = ["ruff"]
+test = [
   # uv does not split the lock on versions a release excludes, and coverage 5 dropped 3.3 and 3.4.
   "coverage<5; python_version < '3.5'",
   "coverage; python_version >= '3.5'",
+]
+dev = [
+  { include-group = "lint" },
+  { include-group = "test" }
 ]
 
 [tool.uv]
@@ -55,3 +59,7 @@ exclude-newer = "1 week"
 # Tests run against the source tree. Building the project needs uv_build,
 # which needs Python>=3.8, so it is not installed into the test environments.
 package = false
+
+# Ruff only ships wheels for Python>=3.7. Without this, the lock picks an unbuildable 2022 sdist for older Pythons.
+[tool.uv.dependency-groups]
+lint = { requires-python = ">=3.7" }
