@@ -165,7 +165,7 @@ def new_get_auth(sock, dname, protocol, host, dno):
     # Translate socket address into the xauth domain
     if protocol == 'darwin':
         family = xauth.FamilyLocal
-        addr = socket.gethostname()
+        addr = socket.gethostname().encode()
 
     elif protocol == 'tcp':
         family = xauth.FamilyInternet

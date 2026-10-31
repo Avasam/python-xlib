@@ -43,6 +43,7 @@ Bug Fixes
 - When neither `XAUTHORITY` nor `HOME` is set, as is usual on Windows, `.Xauthority` is read from `USERPROFILE` like libXau does, instead of connecting without a cookie.
 - On macOS, a `DISPLAY` that names XQuartz's socket connects to that socket. Its protocol was parsed as `None`, so `/tmp/.X11-unix/X<n>` was tried instead.
 - On macOS, the launchd socket path XQuartz sets in `DISPLAY` (`/private/tmp/com.apple.launchd.<id>/org.xquartz:0`) no longer raises `DisplayNameError`.
+- On macOS, connecting through XQuartz's socket sends the Xauthority cookie. The hostname was looked up as `str` against `bytes` entries, so no cookie matched.
 
 Extensions
 ----------

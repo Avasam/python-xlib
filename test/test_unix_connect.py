@@ -1,14 +1,19 @@
 from functools import partial
 import gc
+import os
 import socket
 import sys
+import tempfile
 import types
 import unittest
 import warnings
 from unittest.mock import patch
 
+from Xlib import xauth
 from Xlib.support import unix_connect
 from Xlib.error import DisplayConnectionError, DisplayNameError
+
+from . import xauth_entry
 
 
 @unittest.skipUnless(sys.platform.startswith('linux'), 'Linux specific tests')
@@ -236,6 +241,15 @@ class TestDarwinConnect(unittest.TestCase):
             s = unix_connect.get_socket(display, 'darwin', None, 0)
         self.assertIs(s, get_unix_socket.return_value)
         get_unix_socket.assert_called_once_with(display)
+
+    def test_get_auth_finds_local_cookie(self):
+        fd, authfile = tempfile.mkstemp(suffix='.Xauthority')
+        self.addCleanup(os.unlink, authfile)
+        with os.fdopen(fd, 'wb') as f:
+            f.write(xauth_entry(xauth.FamilyLocal, socket.gethostname().encode(), b'0', b'MIT-MAGIC-COOKIE-1', b'cookie'))
+        with patch.dict(os.environ, {'XAUTHORITY': authfile}):
+            auth = unix_connect.new_get_auth(None, '/private/tmp/org.xquartz:0', 'darwin', None, 0)
+        self.assertEqual(auth, (b'MIT-MAGIC-COOKIE-1', b'cookie'))
 
 
 if __name__ == '__main__':
