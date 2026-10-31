@@ -1,4 +1,5 @@
-from typing import Final
+# Modified from typeshed
+from typing_extensions import Final
 
 XK_XF86_ModeLock: Final = 0x1008FF01
 XK_XF86_MonBrightnessUp: Final = 0x1008FF02

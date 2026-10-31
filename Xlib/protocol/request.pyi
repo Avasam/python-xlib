@@ -1,5 +1,5 @@
-from typing import Final
-from typing_extensions import Never
+# Modified from typeshed
+from typing_extensions import Final, Never
 
 from Xlib import display
 from Xlib.protocol import rq

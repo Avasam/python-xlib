@@ -1,7 +1,9 @@
+# Modified from typeshed
 from _typeshed import SupportsDunderGT, SupportsDunderLT, SupportsRead
 from collections.abc import Iterable, Mapping, Sequence
 from re import Pattern
-from typing import Any, Final, Protocol, TypeAlias, TypeVar, overload, type_check_only
+from typing import Any, Protocol, TypeVar, overload, type_check_only
+from typing_extensions import Final, TypeAlias
 
 from Xlib.display import Display
 from Xlib.support.lock import _DummyLock

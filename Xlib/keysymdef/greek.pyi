@@ -1,4 +1,5 @@
-from typing import Final
+# Modified from typeshed
+from typing_extensions import Final
 
 XK_Greek_ALPHAaccent: Final = 0x7A1
 XK_Greek_EPSILONaccent: Final = 0x7A2

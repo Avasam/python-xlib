@@ -1,5 +1,7 @@
+# Modified from typeshed
 from collections.abc import Iterable, Sequence
-from typing import Any, Literal, Protocol, type_check_only
+from typing import Any, Protocol, type_check_only
+from typing_extensions import Literal
 
 from Xlib._typing import ErrorHandler
 from Xlib.protocol import request, rq

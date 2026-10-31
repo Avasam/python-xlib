@@ -1,4 +1,5 @@
-from typing import Final
+# Modified from typeshed
+from typing_extensions import Final
 
 XK_Arabic_comma: Final = 0x5AC
 XK_Arabic_semicolon: Final = 0x5BB

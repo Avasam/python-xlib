@@ -1,4 +1,5 @@
-from typing import Final
+# Modified from typeshed
+from typing_extensions import Final
 
 XK_Aogonek: Final = 0x1A1
 XK_breve: Final = 0x1A2

@@ -1,4 +1,5 @@
-from typing import Final
+# Modified from typeshed
+from typing_extensions import Final
 
 XK_Hangul: Final = 0xFF31
 XK_Hangul_Start: Final = 0xFF32

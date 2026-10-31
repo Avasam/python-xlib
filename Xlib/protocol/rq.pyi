@@ -1,13 +1,14 @@
-from _typeshed import ConvertibleToInt, SliceableBuffer, Unused
+# Modified from typeshed
+from _typeshed import SliceableBuffer, Unused
 from array import array
 
 # Avoid name collision with List.type
 from builtins import type as Type
 from collections.abc import Callable, Iterable, Sequence
-from typing import Any, Final, Literal, SupportsIndex, TypeAlias, TypeVar, overload, type_check_only
-from typing_extensions import LiteralString
+from typing import Any, TypeVar, overload, type_check_only
+from typing_extensions import Final, Literal, LiteralString, SupportsIndex, TypeAlias
 
-from Xlib._typing import ErrorHandler
+from Xlib._typing import ConvertibleToInt, ErrorHandler
 from Xlib.display import _BaseDisplay, _ResourceBaseClass
 from Xlib.error import XError
 from Xlib.ext.xinput import ClassInfoClass
