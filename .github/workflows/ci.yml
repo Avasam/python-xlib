@@ -27,47 +27,125 @@ jobs:
       - run: uv run --locked --only-group=ruff ruff check
 
   test:
-    name: Python ${{ matrix.python-version }}
-    # ARM runners are faster, and every dependency has an arm64 wheel.
-    runs-on: ubuntu-24.04-arm
+    name: Python ${{ matrix.python-version }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     env:
       # https://docs.python.org/3/library/devmode.html#effects-of-the-python-development-mode
       PYTHONDEVMODE: 1
-      # Fail instead of silently building an sdist when a dependency has no arm64 wheel.
-      # Except on PyPy: uv rejects coverage's `pp38.pp39.pp310-none-any` wheel on PyPy 3.8, which pip accepts.
-      UV_NO_BUILD: ${{ !startsWith(matrix.python-version, 'pypy') }}
+      # Fail instead of silently building an sdist when a dependency has no wheel for the runner.
+      UV_NO_BUILD: 1
     strategy:
       fail-fast: false
       matrix:
-        # PyPy: oldest and newest only, to keep the matrix small.
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13', '3.14', '3.15', 'pypy3.8', 'pypy3.12']
+        # ARM runners are faster, and every dependency has an arm64 wheel.
+        os: [ubuntu-24.04-arm]
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13', '3.14', '3.15', 'pypy3.12']
+        # PyPy and other OSes: oldest and newest only, to keep the matrix small.
+        include:
+          # The arm64 PyPy 3.6 build links the system `libffi.so.6`, which Ubuntu 24.04 lacks. The x64 build bundles its own.
+          - os: ubuntu-24.04
+            python-version: pypy3.6
+          # setup-python's oldest arm64 macOS build is 3.8, Intel runners go down to 3.5.
+          - os: macos-15-intel
+            python-version: '3.5'
+          - os: macos-15
+            python-version: '3.15'
+          # Python 3.3 has no pip to install coverage with on Windows.
+          - os: windows-2025
+            python-version: '3.4'
+          # VcXsrv is x64 only, and runs emulated there.
+          - os: windows-11-arm
+            python-version: '3.15'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
+      # uv refuses Python 3.6 and older, and has no CPython 3.7 or PyPy older than 3.8,
+      # so `legacy` jobs use setup-python and pip instead.
+      - name: Check whether uv can install this Python
+        id: python
+        env:
+          PYTHON_VERSION: ${{ matrix.python-version }}
+        run: |
+          minor=${PYTHON_VERSION#pypy}
+          minor=${minor#3.}
+          if [ "$minor" -lt 8 ]; then legacy=true; else legacy=false; fi
+          echo "legacy=$legacy" >> "$GITHUB_OUTPUT"
+
+      # In `legacy` jobs, only used to export the requirements.
       - uses: astral-sh/setup-uv@v10.3.3
         with:
+          python-version: ${{ steps.python.outputs.legacy != 'true' && matrix.python-version || '' }}
+          activate-environment: ${{ steps.python.outputs.legacy != 'true' }}
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        if: ${{ steps.python.outputs.legacy == 'true' }}
+        with:
           python-version: ${{ matrix.python-version }}
-          activate-environment: true
 
       - name: Install Xvfb
+        if: ${{ runner.os == 'Linux' }}
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends xvfb
 
-      - name: Run tests under Xvfb
+      # XQuartz ships its own Xvfb, which the tests start like on Linux.
+      - name: Install XQuartz
+        if: ${{ runner.os == 'macOS' }}
+        run: |
+          brew install --cask xquartz
+          echo /opt/X11/bin >> "$GITHUB_PATH"
+
+      # Xvfb isn't available on Windows, so the tests use this server through `XLIB_TEST_DISPLAY`.
+      - name: Install and start VcXsrv
+        if: ${{ runner.os == 'Windows' }}
+        shell: pwsh
+        run: |
+          choco install vcxsrv --yes --no-progress
+          Start-Process "$env:ProgramFiles\VcXsrv\vcxsrv.exe" -ArgumentList ':0', '-multiwindow', '-ac'
+          $deadline = (Get-Date).AddSeconds(30)
+          while ($true) {
+            try {
+              (New-Object Net.Sockets.TcpClient '127.0.0.1', 6000).Close()
+              break
+            } catch {
+              if ((Get-Date) -gt $deadline) { throw 'VcXsrv did not start listening' }
+              Start-Sleep -Milliseconds 200
+            }
+          }
+          "XLIB_TEST_DISPLAY=127.0.0.1:0" >> $env:GITHUB_ENV
+
+      - name: Run tests
+        if: ${{ steps.python.outputs.legacy != 'true' }}
         run: |
           uv sync --locked --no-default-groups --group test
           coverage run -m unittest -v
           coverage report > coverage.txt
           coverage html
 
+      - name: Run tests with pip
+        if: ${{ steps.python.outputs.legacy == 'true' }}
+        run: |
+          # Fails on syntax newer than this Python, including in the examples and utilities the tests never import.
+          python -m compileall -q Xlib test examples utils
+          # The last pip that supports every legacy Python. Python 3.4.4 bundles pip 7.1.2,
+          # which predates `--require-hashes` and ignores `Requires-Python`.
+          python -m pip install --disable-pip-version-check pip==19.1.1
+          uv export --locked --no-emit-project --no-default-groups --group test --output-file "$RUNNER_TEMP/requirements.txt"
+          python -m pip install --disable-pip-version-check --require-hashes -r "$RUNNER_TEMP/requirements.txt"
+          python -m coverage run -m unittest -v
+          python -m coverage report > coverage.txt
+          python -m coverage html
+
       # Plain text report, to match `test-docker`, where coverage 6 and older lack `--format=markdown`.
       - name: Write coverage to job summary
         run: |
           {
-            echo '### Coverage on Python ${{ matrix.python-version }}'
+            echo '### Coverage on Python ${{ matrix.python-version }} (${{ matrix.os }})'
             echo '```text'
             cat coverage.txt
             echo '```'
@@ -76,7 +154,7 @@ jobs:
       - name: Upload HTML coverage report
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: coverage-html-py${{ matrix.python-version }}
+          name: coverage-html-py${{ matrix.python-version }}-${{ matrix.os }}
           path: htmlcov/
 
   test-docker:
