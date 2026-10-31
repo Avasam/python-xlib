@@ -95,6 +95,29 @@ jobs:
       - uses: astral-sh/setup-uv@v10.3.3
       - run: uv run --locked --only-group=ty ty check --python-version=${{ matrix.python-version }}
 
+  # Compares the stubs with the runtime of the Python it runs on, which can differ per OS.
+  # The oldest Python is the oldest the newest mypy installs on, see pyproject.toml.
+  stubtest:
+    name: stubtest (Python ${{ matrix.python-version }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    env:
+      # mypy only colors its output when it finds the terminal's capabilities
+      TERM: xterm-256color
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04-arm, macos-15, windows-2025]
+        python-version: ['3.10', '3.15']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: uv run --locked --only-group=mypy python -m mypy.stubtest Xlib --mypy-config-file=mypy.ini --allowlist=stubtest_allowlist.txt --strict-type-check-only
+
   test:
     name: Python ${{ matrix.python-version }} (${{ matrix.os }})
     runs-on: ${{ matrix.os }}

@@ -11,6 +11,7 @@ from Xlib.X import (
 )
 
 FamilyLocal: Final = 256
+FamilyWild: Final = 65535
 
 class Xauthority:
     entries: list[tuple[bytes, bytes, bytes, bytes, bytes]]

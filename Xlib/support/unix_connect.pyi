@@ -10,11 +10,11 @@ from typing_extensions import Final, Literal, TypeAlias
 if sys.platform == "darwin":
     SUPPORTED_PROTOCOLS: Final[tuple[None, Literal["tcp"], Literal["unix"], Literal["darwin"]]]
     _Protocol: TypeAlias = Literal["tcp", "unix", "darwin"] | None
-    DARWIN_DISPLAY_RE: Final[Pattern[str]]
 else:
     SUPPORTED_PROTOCOLS: Final[tuple[None, Literal["tcp"], Literal["unix"]]]
     _Protocol: TypeAlias = Literal["tcp", "unix"] | None
 uname: uname_result
+DARWIN_DISPLAY_RE: Final[Pattern[str]]
 DISPLAY_RE: Final[Pattern[str]]
 
 def get_display(display: str | None) -> tuple[str, str | None, str | None, int, int]: ...

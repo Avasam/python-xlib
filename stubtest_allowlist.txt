@@ -1,0 +1,24 @@
+# Entries stubtest reports that are not errors in the stubs. Each one fails stubtest once it is no longer needed.
+# Started from typeshed's https://github.com/python/typeshed/blob/main/stubs/python-xlib/@tests/stubtest_allowlist.txt
+
+# Type helpers, only in the stubs
+Xlib._typing
+
+# These will unconditionally fail at runtime
+# See: python-xlib/python-xlib#253
+Xlib.protocol.rq.DictWrapper.__gt__
+Xlib.protocol.rq.DictWrapper.__lt__
+Xlib.protocol.rq.Event.__gt__
+Xlib.protocol.rq.Event.__lt__
+
+# should allow setting any attribute
+Xlib.protocol.rq.GetAttrData.__setattr__
+
+# Can be None or str once instantiated
+Xlib.protocol.rq.*.structcode
+# Should only ever be str once instantiated
+Xlib.protocol.rq.*.name
+
+# Iteration variable that bleeds into the global scope
+Xlib.protocol.rq.c
+Xlib.protocol.rq.size

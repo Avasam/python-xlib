@@ -10,6 +10,8 @@ Credit contributors other than the maintainer as `(thanks [@user][user])`, and a
 
 The `.pyi` stubs in `Xlib/` come from typeshed and are licensed under Apache-2.0 (see [LICENSE-typeshed](LICENSE-typeshed)), which requires modified files to carry a prominent notice of the change. The first change to a stub adds `# Modified from typeshed` as its first line. A stub that already has that line needs nothing more.
 
+stubtest compares the stubs with the implementation. What it reports that is not an error in the stubs goes in [stubtest_allowlist.txt](stubtest_allowlist.txt), with a comment saying why. `uv run utils/run_checkers.py` runs it with every other check.
+
 ### Supported type checker versions
 
 Checking the oldest supported Python needs an old mypy (mypy 1.5 for Python 3.4), so the stubs must work with its bundled typeshed. A target that a newer mypy supports is assumed to be checked with that newer mypy. Dropping a Python version can drop the old mypy only it needed.
