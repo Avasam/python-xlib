@@ -1,29 +1,88 @@
+extend = ".venv/Beslogic-Ruff-Config/ruff.toml"
 preview = false
+# Ruff can't infer from `requires-python = ">=3.3"` (below its minimum),
+# and would otherwise default to Python 3.10+. See: https://github.com/astral-sh/ruff/issues/8832
+target-version = "py37"
 
 [lint]
-future-annotations = true
-# https://docs.astral.sh/ruff/rules/
 ignore = [
   ###
-  # Rules that have no performance or correctness impact whatsoever, so we reduce churn in this fork
+  # Rules that go against this project's conventions
+  # These are rules we'd disable even if we had no concerns of reducing diff with upstream
   ###
+  "PT", # flake8-pytest-style: tests use `unittest`, not pytest
+  "S311", # suspicious-non-cryptographic-random-usage: no cryptography, `random` only drives test data and demos
+  "T20", # flake8-print: output goes through `print`, not `logging`
+
+  ###
+  # Rules that have no performance or correctness impact whatsoever, so we reduce churn in this fork
+  # Rules here WOULD have been acceptable, if starting the project fresh. Only add existing failures
+  ###
+  "A001", # builtin-variable-shadowing
+  "A002", # builtin-argument-shadowing: renaming breaks keyword callers
+  "ARG001", # unused-function-argument: renaming breaks callers and callbacks
+  "ARG005", # unused-lambda-argument
+  "B007", # unused-loop-control-variable
+  "B904", # raise-without-from-inside-except: cosmetic, Python 3 already chains via `__context__`
+  "C901", # complex-structure
+  "COM819", # prohibited-trailing-comma
+  "D", # pydocstyle
+  "E401", # multiple-imports-on-one-line
+  "E501", # line-too-long
+  "E701", # multiple-statements-on-one-line-colon
+  "E703", # useless-semicolon
+  "E713", # not-in-test: same bytecode
+  "E741", # ambiguous-variable-name
+  "FBT002", # boolean-default-value-positional-argument: making it keyword-only breaks positional callers
   "I001", # unsorted-imports
+  "ISC001", # single-line-implicit-string-concatenation
+  "ISC002", # multi-line-implicit-string-concatenation
+  "N801", # invalid-class-name
+  "N802", # invalid-function-name
+  "N806", # non-lowercase-variable-in-function
+  "N812", # lowercase-imported-as-non-lowercase
+  "N816", # mixed-case-variable-in-global-scope
+  "N818", # error-suffix-on-exception-name
   "PIE790", # unnecessary-placeholder
   "PIE808", # unnecessary-range-start
+  "PLR0912", # too-many-branches
+  "PLR0913", # too-many-arguments
+  "PLR0915", # too-many-statements
+  "PLR0917", # too-many-positional-arguments
+  "PLR5501", # collapsible-else-if
   "PLW0120", # useless-else-on-loop
+  "PLW1641", # eq-without-hash: `__hash__ = None` is already default, and type checkers know it
+  "PLW2901", # redefined-loop-name
+  "Q", # flake8-quotes
   "RET501", # unnecessary-return-none
+  "RET503", # implicit-return
+  "RET504", # unnecessary-assign
+  "RET505", # superfluous-else-return
+  "RET507", # superfluous-else-continue
+  "RET508", # superfluous-else-break
+  "RUF021", # parenthesize-chained-operators
   "RUF022", # unsorted-dunder-all
   "RUF059", # unused-unpacked-variable
   "SIM102", # collapsible-if
+  "SIM108", # if-else-block-instead-of-if-exp
   "SIM114", # if-with-same-arms
+  "TD004", # missing-todo-colon
+  "TD005", # missing-todo-description
+  "TID252", # relative-imports
+  "TRY300", # try-consider-else
   "UP004", # useless-object-inheritance
+  "UP015", # redundant-open-modes
   "UP024", # os-error-alias: already the same class since Python 3.3
   "UP025", # unicode-kind-prefix
   "UP030", # format-literals
+  "W191", # tab-indentation
+  "W291", # trailing-whitespace
+  "W293", # blank-line-with-whitespace
 
   ###
   # Rules that would have a negative performance impact
   ###
+  "PLC0415", # import-outside-top-level: lazy and version-gated imports keep `import Xlib` fast
   "PLR1730", # if-stmt-min-max: builtin call is slower than the comparison
   "SIM208", # double-negation: Autofix drops the `bool` coercion, and `bool()` is slower than `not not`
   "UP031", # printf-string-formatting: `%` is faster than `str.format`
@@ -31,114 +90,35 @@ ignore = [
   ###
   # Rules that are flagged and would break Python 3.3
   ###
-  "UP032", # f-string: Python 3.6+
+  "PTH", # flake8-use-pathlib: `pathlib` is Python 3.4+
+  "RUF005", # collection-literal-concatenation: iterable unpacking in displays is Python 3.5+
   "RUF012", # mutable-class-default: `typing.ClassVar` annotations are Python 3.6+ syntax
+  "UP032", # f-string: Python 3.6+
   "UP036", # outdated-version-block: https://github.com/astral-sh/ruff/issues/8832
-
-  # Below is a copy of my shared configs
-
-  ###
-  # Not needed or wanted
-  ###
-  "CPY001", # missing-copyright-notice: Assume license from root OR private project
-  "D1", # pydocstyle Missing docstring
-  "D401", # pydocstyle: non-imperative-mood
-  "EM", # flake8-errmsg
-  # This is often something we can't control: https://github.com/astral-sh/ruff/issues/9497
-  # Also false-positive with positional-only arguments: https://github.com/astral-sh/ruff/issues/3247
-  "FBT003", # flake8-boolean-trap: boolean-positional-value-in-call
-  "INP", # flake8-no-pep420
-  "ISC003", # flake8-implicit-str-concat: explicit-string-concatenation
-  # Short messages are still considered "long" messages
-  "TRY003", # tryceratops : raise-vanilla-args
-  # Don't remove commented code, also too inconsistant
-  "ERA001", # eradicate: commented-out-code
-  # contextlib.suppress is roughly 3x slower than try/except
-  "SIM105", # flake8-simplify: use-contextlib-suppress
-  # Not colored correctly in Pylance https://github.com/microsoft/pylance-release/issues/6942
-  "UP047", # non-pep695-generic-function
-  # We want D213: multi-line-summary-second-line and D211: no-blank-line-before-class
-  # Disabling these two is more concise than selecting https://docs.astral.sh/ruff/settings/#lint_pydocstyle_convention
-  "D203", # pydocstyle: one-blank-line-before-class
-  "D212", # pydocstyle: multi-line-summary-first-line
-  # Allow differentiating between broken (FIXME) and to be done/added/completed (TODO)
-  "TD001", # flake8-todos: invalid-todo-tag
-  # Using git blame to find author of TODO is sufficient
-  "TD002", # flake8-todos
-  # Often just leads to redundant more verbose code when needing an actual str
-  "PTH208", # Use `pathlib.Path.iterdir()` instead.
-  # Typeshed doesn't want complex or non-literal defaults for maintenance and testing reasons.
-  # This doesn't affect us, let's have more complete stubs.
-  "PYI011", # typed-argument-default-in-stub
-  "PYI014", # argument-default-in-stub
-  "PYI053", # string-or-bytes-too-long
-
-  ###
-  # Don't enforce human readable names and ruff suppression comments until out of preview
-  ###
-  "RUF105", # noqa-comments
-  "RUF106", # rule-codes-in-suppression-comments
-  "RUF201", # rule-codes-in-selectors
-
-  ###
-  # Checked by type-checker (pyright/mypy)
-  ###
-  "ANN", # flake-annotations
-  "PGH003", # blanket-type-ignore
-  # Already shown by Pylance, checked by pyright, and can be caused by implementing a protocol.
-  "ARG002", # Unused method argument
-
-  ###
-  # These should be warnings (https://github.com/astral-sh/ruff/issues/1256 & https://github.com/astral-sh/ruff/issues/1774)
-  ###
-  "FIX", # flake8-fixme
-  # Not all TODOs are worth an issue, this would be better as a warning
-  "TD003", # flake8-todos: missing-todo-link
-  # Python 3.11 introduced "zero cost" exception handling
-  # Good to watch for, but often unfixable
-  "PERF203", # try-except-in-loop,
-  
-  # TC helps prevent circular imports, reduce runtime cost of typing symbols,
-  # and prevent leaking implementations details into modules
-  # However stdlib is not at risk of circular import, is clearly not public API,
-  # and assume it's gonna be included in the import chain at some point anyway 
-  "TC003", # typing-only-standard-library-import
-  
-  # Too many magic number "2" that are preferable inline. https://github.com/astral-sh/ruff/issues/10009
-  "PLR2004", # magic-value-comparison
-
-  ###
-  # Conflict with formatter (you can remove this section if you don't use Ruff as a formatter)
-  ###
-  "COM812", # missing-trailing-comma
-
-  ###
-  # Rules about missing special documentation. Up to you if you wanna enable these, you must also disable D406, D407
-  ###
-  "DOC201", #	docstring-missing-returns
-  "DOC402", #	docstring-missing-yields
-  "DOC501", #	docstring-missing-exception
-  # "D406", # new-line-after-section-name, conflicts with DOC
-  # "D407", # dashed-underline-after-section, conflicts with DOC
 ]
-# F401 would remove imports not marked as explicit re-exports, which may break API boundaries
-extend-unsafe-fixes = ["F401"]
 
 [lint.per-file-ignores]
 "Xlib/**" = [
   "N999", # invalid-module-name: renaming would break the public API
 ]
+"test/**" = [
+  "S", # Tests and generator only run trusted, local commands
+]
 
-# https://docs.astral.sh/ruff/settings/#flake8-implicit-str-concat
-[lint.flake8-implicit-str-concat]
-allow-multiline = false
+[lint.flake8-self]
+# Protocol framework members shared across `rq`, `protocol`, `ext`, and their users
+extend-ignore-names = [
+  "_binary",
+  "_code",
+  "_data",
+  "_parse_response",
+  "_reply",
+  "_request",
+  "_serial",
+  "_set_error",
+  "_success_reply",
+]
 
-# https://docs.astral.sh/ruff/settings/#lintflake8-type-checking
-[lint.flake8-type-checking]
-quote-annotations = true
-
-
-# https://docs.astral.sh/ruff/settings/#lint_pyflakes_allowed-unused-imports
 [lint.pyflakes]
 # Imported for its side effect of swapping in real thread locks
 allowed-unused-imports = ["Xlib.threaded"]

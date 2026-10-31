@@ -73,10 +73,8 @@ class LittleEndianTest(TestCase):
 
 
 def tohex(bin):
-    hex = []
-    for i in range(0, len(bin), 16):
-        hex.append(str(binascii.hexlify(bin[i:i+16])) + '\n')
-    return hex
+    return [str(binascii.hexlify(bin[i:i+16])) + '\n'
+            for i in range(0, len(bin), 16)]
 
 def bindiff(bin1, bin2):
     hex1 = tohex(bin1)

@@ -24,24 +24,18 @@ RESOURCE_DEF = (('CARD8', 'reqType'),
                 ('CARD16', 'length'),
                 ('CARD32', 'id'))
 
+request_defs = {}
+mini_request_defs = {}
+resource_request_defs = {}
+reply_defs = {}
+struct_defs = {}
+event_defs = {}
+
 def read_defs():
-    global request_defs, reply_defs, struct_defs
-    global mini_request_defs, resource_request_defs
-    global event_defs
-
-    request_defs = {}
-    mini_request_defs = {}
-    resource_request_defs = {}
-    reply_defs = {}
-    struct_defs = {}
-    event_defs = {}
-
     for line in sys.stdin.readlines():
         parts = line.strip().split()
 
-        fields = []
-        for f in parts[2:]:
-            fields.append(f.split(':'))
+        fields = [f.split(':') for f in parts[2:]]
 
         if parts[0] == 'REQUEST':
             request_defs[parts[1]] = fields
@@ -506,10 +500,9 @@ def gen_func(fc, funcname, structname, outputname, pydef, cdef, vardefs):
                           { 'family': X.FamilyInternet,
                             'name': [ 130, 236, 254, 15 ] }, ]
 
-                cdata = []
-                for p in pydata:
-                    cdata.append("{ { %d, 0, 4 }, { %d, %d, %d, %d } }"
-                                 % ((p['family'], ) + tuple(p['name'])))
+                cdata = ["{ { %d, 0, 4 }, { %d, %d, %d, %d } }"
+                         % ((p['family'], ) + tuple(p['name']))
+                         for p in pydata]
 
                 fc.write('struct { xHostEntry e; CARD8 name[4]; } %s[2];\n      ' % f.name)
 
@@ -773,7 +766,7 @@ def gen_func(fc, funcname, structname, outputname, pydef, cdef, vardefs):
                 pyi = pyi - 1
 
         # special case for value list mask
-        elif (f == 'mask' or f == 'valueMask') and flags is not None:
+        elif f in {'mask', 'valueMask'} and flags is not None:
             fc.write('      data.xstruct.%s = %d;\n' % (f, flags))
 
         elif isinstance(pyf, rq.ConstantField):
@@ -845,7 +838,7 @@ def gen_value(t):
         val = randint(-32768, -256)
     elif t == 'INT32':
         val = randint(-2147483647, -65536)
-    elif t == 'CARD8' or t == 'BYTE':
+    elif t in {'CARD8', 'BYTE'}:
         val = randint(128, 255)
     elif t == 'CARD16':
         val = randint(256, 65535)
@@ -884,9 +877,7 @@ def build_args(args):
     return '{\n' + ''.join(kwlist) + '            }'
 
 def build_bin(bin):
-    bins = []
-    for i in range(0, len(bin), 16):
-        bins.append(bin[i:i+16])
+    bins = [bin[i:i+16] for i in range(0, len(bin), 16)]
 
     bins2 = []
     for i in range(0, len(bins), 2):

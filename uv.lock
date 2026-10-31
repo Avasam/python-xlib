@@ -27,6 +27,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "beslogic-ruff-config", marker = "python_full_version >= '3.7'" },
     { name = "coverage", version = "4.5.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.5'" },
     { name = "coverage", version = "5.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.5.*'" },
     { name = "coverage", version = "6.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.6.*'" },
@@ -37,7 +38,8 @@ dev = [
     { name = "coverage", version = "7.17.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "ruff", marker = "python_full_version >= '3.7'" },
 ]
-lint = [
+ruff = [
+    { name = "beslogic-ruff-config", marker = "python_full_version >= '3.7'" },
     { name = "ruff", marker = "python_full_version >= '3.7'" },
 ]
 test = [
@@ -53,21 +55,33 @@ test = [
 
 [package.group-requires-python]
 dev = ">=3.7"
-lint = ">=3.7"
+ruff = ">=3.7"
 
 [package.metadata]
 requires-dist = [{ name = "importlib-metadata", marker = "python_full_version >= '3.6' and python_full_version < '3.8'" }]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "beslogic-ruff-config", marker = "python_full_version >= '3.7'", git = "https://github.com/BesLogic/Beslogic-Ruff-Config?rev=2026.10.31" },
     { name = "coverage", marker = "python_full_version < '3.5'", specifier = "<5" },
     { name = "coverage", marker = "python_full_version >= '3.5'" },
     { name = "ruff", marker = "python_full_version >= '3.7'" },
 ]
-lint = [{ name = "ruff", marker = "python_full_version >= '3.7'" }]
+ruff = [
+    { name = "beslogic-ruff-config", marker = "python_full_version >= '3.7'", git = "https://github.com/BesLogic/Beslogic-Ruff-Config?rev=2026.10.31" },
+    { name = "ruff", marker = "python_full_version >= '3.7'" },
+]
 test = [
     { name = "coverage", marker = "python_full_version < '3.5'", specifier = "<5" },
     { name = "coverage", marker = "python_full_version >= '3.5'" },
+]
+
+[[package]]
+name = "beslogic-ruff-config"
+version = "2026.10.31"
+source = { git = "https://github.com/BesLogic/Beslogic-Ruff-Config?rev=2026.10.31#4dfdf74ee64a54230575d2fc79ca85dcb5723366" }
+dependencies = [
+    { name = "ruff" },
 ]
 
 [[package]]

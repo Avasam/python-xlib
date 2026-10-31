@@ -947,4 +947,4 @@ hosts
                             onerror = onerror)
 
 # Late import because of circular dependency
-from . import error
+from . import error  # noqa: E402

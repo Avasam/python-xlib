@@ -30,7 +30,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from Xlib import X
 from Xlib.protocol import display
-from Xlib.protocol.request import *
+from Xlib.protocol.request import CreateGC, CreateWindow, GetMotionEvents, MapWindow, PolyLine
 
 # Application window (only one)
 class Window(object):

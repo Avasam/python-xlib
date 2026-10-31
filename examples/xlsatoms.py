@@ -57,15 +57,15 @@ def list_atoms(d,re_obj,low,high):
     while(low <= high):
         try:
             val = d.get_atom_name(low)
-            if (re_obj == None) :
+            if (re_obj is None) :
                 print_atom(options.format,low,val)
-            elif re_obj.match(val) != None:
+            elif re_obj.match(val) is not None:
                 print_atom(options.format,low,val)
             low += 1
         except error.BadAtom:
             sys.exit(0)
 
-if options.name != None:
+if options.name is not None:
     try:
         atom = d.intern_atom(options.name, only_if_exists=True)
         val = d.get_atom_name(atom)
@@ -85,7 +85,7 @@ if rangeVals[1] != "":
 else:
     high = sys.maxsize
 
-if options.match_re != None:
+if options.match_re is not None:
     re_obj = re.compile(options.match_re)
 else:
     re_obj = None

@@ -313,6 +313,7 @@ class ButtonState(rq.ValueField):
             mask_value <<= 8
             mask_value |= byte
         data = data[mask_len:]
+        # ruff: ignore[S101] # Protocol invariant, the low bit is always 0
         assert (mask_value & 1) == 0
         return ButtonMask(mask_value >> 1, length), data
 

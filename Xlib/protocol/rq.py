@@ -785,9 +785,7 @@ class KeyboardMapping(ValueField):
 
         a = array(array_unsigned_codes[4], bytes(data[:dlen]))
 
-        ret = []
-        for i in range(0, len(a), format):
-            ret.append(a[i : i + format])
+        ret = [a[i : i + format] for i in range(0, len(a), format)]
 
         return ret, data[dlen:]
 
@@ -813,9 +811,7 @@ class ModifierMapping(ValueField):
     def parse_binary_value(self, data, display, length, format):
         a = array(array_unsigned_codes[1], data[:8 * format])
 
-        ret = []
-        for i in range(0, 8):
-            ret.append(a[i * format : (i + 1) * format])
+        ret = [a[i * format : (i + 1) * format] for i in range(0, 8)]
 
         return ret, data[8 * format:]
 
@@ -947,6 +943,7 @@ class Struct(object):
             # Append structcode if there is one and we haven't
             # got any varsize fields yet.
             if f.structcode is not None:
+                # ruff: ignore[S101] # Struct definition invariant
                 assert not self.var_fields
 
                 self.static_codes = self.static_codes + f.structcode

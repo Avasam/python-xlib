@@ -1,6 +1,5 @@
 from functools import partial
 import gc
-import io
 import socket
 import sys
 import unittest
@@ -157,19 +156,24 @@ class TestUnixConnect(unittest.TestCase):
             # No cookie for this display.
             ('', ('', b'')),
         ):
-            with patch('os.popen', return_value=io.StringIO(xauth_output)):
+            with patch('subprocess.Popen') as popen:
+                popen.return_value.communicate.return_value = (xauth_output, None)
                 self.assertEqual(unix_connect.old_get_auth(None, 'host/unix:0', 'host', 0), expected)
+            # The display name must reach xauth as a single argument, never through a shell.
+            self.assertEqual(popen.call_args[0][0], ['xauth', 'list', 'host/unix:0'])
 
     def test_leaking_sockets(self):
         with warnings.catch_warnings():
             warnings.simplefilter("error", ResourceWarning)
             try:
+                # ruff: ignore[SLF001] # Testing the helper that closes the socket
                 unix_connect._get_tcp_socket("invalid!", 0x10000)
             except (OSError, OverflowError):
                 pass
             finally:
                 gc.collect()
             try:
+                # ruff: ignore[SLF001] # Testing the helper that closes the socket
                 unix_connect._get_unix_socket('/tmp/too_long_socket_name' + ' ' * 1024)
             except OSError:
                 pass
