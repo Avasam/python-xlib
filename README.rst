@@ -55,8 +55,8 @@ The supported Python versions are set by ``requires-python`` in
 `pyproject.toml`_.
 
 The Python X Library needs an X server to connect to: native on Linux and BSD,
-`XQuartz`_ on macOS, and an X server such as `VcXsrv`_ or `X410`_ (or `WSLg`_)
-on Windows.
+`XQuartz`_ on macOS, and an X server such as `VcXsrv`_ or `X410`_ on Windows.
+CI tests it on Linux, on macOS with XQuartz's Xvfb, and on Windows with VcXsrv.
 
 Installation
 ~~~~~~~~~~~~
@@ -186,7 +186,6 @@ ordered by importance.
 .. _XQuartz:      https://www.xquartz.org/
 .. _VcXsrv:       https://github.com/marchaesen/vcxsrv
 .. _X410:         https://x410.dev/
-.. _WSLg:         https://github.com/microsoft/wslg
 
 .. |Build Status| image::
    https://github.com/Avasam/python-xlib/actions/workflows/ci.yml/badge.svg
