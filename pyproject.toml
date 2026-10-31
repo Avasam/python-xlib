@@ -14,8 +14,8 @@ name = "avasam-python-xlib"
 version = "0.33"
 description = "Python X Library: a drop-in fork of python-xlib, the pure Python X11 client, with bug fixes, speedups and modern packaging"
 readme = "README.rst"
-license = "LGPL-2.1-or-later"
-license-files = ["LICENSE"]
+license = "LGPL-2.1-or-later AND Apache-2.0"
+license-files = ["LICENSE", "LICENSE-typeshed"]
 authors = [{ name = "Peter Liljenberg", email = "petli@ctrl-c.liu.se" }]
 maintainers = [{ name = "Avasam" }]
 keywords = [
