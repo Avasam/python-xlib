@@ -1,9 +1,7 @@
 The Python X Library (Avasam's fork)
 ====================================
 
-|Build Status| |Ruff| 
-
-.. <!-- |mypy| |pyright| |ty| -->
+|Build Status| |Ruff| |mypy| |pyright| |ty|
 
 `Homepage`_ | `Releases`_ | `Changelog`_ | `Upstream`_
 
