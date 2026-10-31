@@ -17,27 +17,17 @@ concurrency:
 jobs:
   test:
     name: Python ${{ matrix.python-version }}
-    runs-on: ubuntu-latest
+    # ARM runners are faster, and every dependency has an arm64 wheel.
+    runs-on: ubuntu-24.04-arm
     env:
       # https://docs.python.org/3/library/devmode.html#effects-of-the-python-development-mode
-      # Python 3.6 and older ignore it.
       PYTHONDEVMODE: 1
+      # Fail instead of silently building an sdist when a dependency has no arm64 wheel.
+      UV_NO_BUILD: 1
     strategy:
       fail-fast: false
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13', '3.14', '3.15']
-        # uv refuses Python 3.6 and older and cannot download 3.7, so these run in Docker with pip.
-        include:
-          - python-version: '3.3'
-            docker: true
-          - python-version: '3.4'
-            docker: true
-          - python-version: '3.5'
-            docker: true
-          - python-version: '3.6'
-            docker: true
-          - python-version: '3.7'
-            docker: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -45,34 +35,22 @@ jobs:
 
       - uses: astral-sh/setup-uv@v10.3.3
         with:
-          python-version: ${{ !matrix.docker && matrix.python-version || '' }}
+          python-version: ${{ matrix.python-version }}
+          activate-environment: true
 
       - name: Install Xvfb
-        if: ${{ !matrix.docker }}
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends xvfb
 
       - name: Run tests under Xvfb
-        if: ${{ !matrix.docker }}
         run: |
-          uv run --locked python -W all -m coverage run -m unittest -v
-          uv run --locked coverage report > coverage.txt
-          uv run --locked coverage html
+          uv sync --locked
+          coverage run -m unittest -v
+          coverage report > coverage.txt
+          coverage html
 
-      - name: Run tests under Xvfb in Docker
-        if: ${{ matrix.docker }}
-        run: |
-          uv export --locked --no-emit-project --output-file "$RUNNER_TEMP/requirements.txt"
-          docker run --rm \
-            --env PYTHONDEVMODE \
-            --volume "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" \
-            --volume "$RUNNER_TEMP/requirements.txt:/tmp/requirements.txt:ro" \
-            --workdir "$GITHUB_WORKSPACE" \
-            "python:${{ matrix.python-version }}-alpine" \
-            sh .github/scripts/docker-tests.sh /tmp/requirements.txt
-
-      # Plain text report, since `coverage report --format=markdown` needs coverage 7.
+      # Plain text report, to match `test-docker`, where coverage 6 and older lack `--format=markdown`.
       - name: Write coverage to job summary
         run: |
           {
@@ -88,11 +66,80 @@ jobs:
           name: coverage-html-py${{ matrix.python-version }}
           path: htmlcov/
 
+  test-docker:
+    name: Python ${{ matrix.python-version }}${{ matrix.platform != 'native' && format(' ({0})', matrix.platform) || '' }}
+    # ARM runners are faster, and every image has an arm64 variant, except python:3.3-alpine.
+    runs-on: ${{ matrix.python-version == '3.3' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
+    env:
+      # https://docs.python.org/3/library/devmode.html#effects-of-the-python-development-mode
+      # Python 3.6 and older ignore it.
+      PYTHONDEVMODE: 1
+    strategy:
+      fail-fast: false
+      matrix:
+        # GitHub has no big-endian runner, and uv cannot target s390x,
+        # so the big-endian tests run on s390x under QEMU. There is no s390x python:3.3-alpine.
+        python-version: ['3.4', '3.5', '3.6', '3.7', '3.8', '3.9', '3.10', '3.11', '3.12', '3.13', '3.14', '3.15']
+        platform: [s390x]
+        # uv refuses Python 3.6 and older and cannot download 3.7, so these run in Docker with pip.
+        include:
+          - python-version: '3.3'
+            platform: native
+          - python-version: '3.4'
+            platform: native
+          - python-version: '3.5'
+            platform: native
+          - python-version: '3.6'
+            platform: native
+          - python-version: '3.7'
+            platform: native
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@v10.3.3
+
+      - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+        if: ${{ matrix.platform != 'native' }}
+        with:
+          # Runs privileged, so pinned instead of the default floating `latest`.
+          image: docker.io/tonistiigi/binfmt:qemu-v10.2.3-68@sha256:400a4873b838d1b89194d982c45e5fb3cda4593fbfd7e08a02e76b03b21166f0
+          platforms: ${{ matrix.platform }}
+
+      - name: Run tests under Xvfb in Docker
+        run: |
+          uv export --locked --no-emit-project --output-file "$RUNNER_TEMP/requirements.txt"
+          docker run --rm \
+            ${{ matrix.platform != 'native' && format('--platform=linux/{0}', matrix.platform) || '' }} \
+            --env PYTHONDEVMODE \
+            --volume "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" \
+            --volume "$RUNNER_TEMP/requirements.txt:/tmp/requirements.txt:ro" \
+            --workdir "$GITHUB_WORKSPACE" \
+            "python:${{ matrix.python-version }}-alpine" \
+            sh .github/scripts/docker-tests.sh /tmp/requirements.txt
+
+      # Plain text report, since `coverage report --format=markdown` needs coverage 7.
+      - name: Write coverage to job summary
+        run: |
+          {
+            echo '### Coverage on Python ${{ matrix.python-version }}${{ matrix.platform != 'native' && format(' ({0})', matrix.platform) || '' }}'
+            echo '```text'
+            cat coverage.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload HTML coverage report
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-html-py${{ matrix.python-version }}${{ matrix.platform != 'native' && format('-{0}', matrix.platform) || '' }}
+          path: htmlcov/
+
   release:
     name: Publish GitHub release
-    needs: test
+    needs: [test, test-docker]
     if: startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     permissions:
       contents: write
     steps:

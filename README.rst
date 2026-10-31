@@ -122,8 +122,23 @@ touched.
 
 ::
 
-    uv run python -m unittest
-    uv run python -m unittest -v test.test_xlib_display
+    uv run -m unittest
+    uv run -m unittest -v test.test_xlib_display
+
+The big-endian tests (``test.test_requests_be`` and ``test.test_events_be``)
+are skipped on little-endian machines, such as x86 and most ARM systems. To
+run them, emulate a big-endian CPU with QEMU and Docker. Register QEMU with
+the kernel once (``qemu-user-binfmt`` on Debian and Ubuntu), then run them in
+an s390x container::
+
+    docker run --rm --platform linux/s390x -v "$PWD:/src:ro" -w /src python:3.15-alpine \
+      python -m unittest test.test_requests_be test.test_events_be
+
+CI runs the whole suite on s390x, for every Python version from 3.4. To do
+the same, install ``Xvfb`` in the container first::
+
+    docker run --rm --platform linux/s390x -v "$PWD:/src:ro" -w /src python:3.15-alpine \
+      sh -c 'apk add --no-cache xvfb >/dev/null && python -m unittest'
 
 
 Project status
