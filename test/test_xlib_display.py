@@ -97,7 +97,9 @@ class TestXlibDisplay(unittest.TestCase):
         self.assertEqual(self.display.keysym_to_keycode(Xlib.X.NoSymbol), 0)
 
     def test_keysym_to_keycode_for_valid_symbol(self):
-        self.assertEqual(self.display.keysym_to_keycode(self.keysym), 119)
+        # The keycode depends on the server's keymap, so check the round trip.
+        keycode = self.display.keysym_to_keycode(self.keysym)
+        self.assertEqual(self.display.keycode_to_keysym(keycode, 0), self.keysym)
 
     def test_keysym_to_keycodes_for_nosymbol(self):
         self.assertEqual(self.display.keysym_to_keycodes(Xlib.X.NoSymbol), [])

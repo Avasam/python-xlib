@@ -26,6 +26,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import create_autospec, patch
 
 from Xlib import display
 from . import Xvfb
@@ -113,6 +114,22 @@ class TestExamples(unittest.TestCase):
     def test_xres(self):
         """ Run xres.py -- demonstrate the X-Resource extension """
         self.assertEqual(run_example("xres.py"), 0)
+
+    def test_dpms_without_extension(self) -> None:
+        """ dpms.py exits with a message on a server without DPMS, as VcXsrv """
+        # An autospec has no `dpms_*` methods, like a `Display` whose server lacks DPMS
+        no_dpms = create_autospec(display.Display, instance=True)
+        no_dpms.has_extension.return_value = False
+        # Not `runpy.run_path`: on Python 3.3, it returns a copy of the globals of a temporary module,
+        # whose teardown sets the originals that `main` looks `DPMSExamples` up in to `None`.
+        path = os.path.join(examples_folder, "dpms.py")
+        with open(path) as f:
+            source = f.read()
+        example = {"__name__": "dpms"}
+        exec(compile(source, path, "exec"), example)
+        with patch("Xlib.display.Display", return_value=no_dpms), self.assertRaises(SystemExit) as cm:
+            example["main"]()
+        self.assertEqual(cm.exception.code, "DPMS is not supported in your system")
 
 
 if __name__ == '__main__':

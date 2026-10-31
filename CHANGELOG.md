@@ -41,6 +41,9 @@ Bug Fixes
 - `import Xlib` imports the submodules listed in `Xlib.__all__`, and `Xlib.ext.__all__` is a list instead of a single-use iterator.
 - On Windows, `DISPLAY=:0` connects over TCP to `localhost` instead of raising `AttributeError`, and `unix/:0` raises `DisplayConnectionError`. Elsewhere, the TCP fallback for `:0` connects to `localhost` instead of the empty address.
 - When neither `XAUTHORITY` nor `HOME` is set, as is usual on Windows, `.Xauthority` is read from `USERPROFILE` like libXau does, instead of connecting without a cookie.
+- On macOS, a `DISPLAY` that names XQuartz's socket connects to that socket. Its protocol was parsed as `None`, so `/tmp/.X11-unix/X<n>` was tried instead.
+- On macOS, the launchd socket path XQuartz sets in `DISPLAY` (`/private/tmp/com.apple.launchd.<id>/org.xquartz:0`) no longer raises `DisplayNameError`.
+- On macOS, connecting through XQuartz's socket sends the Xauthority cookie. The hostname was looked up as `str` against `bytes` entries, so no cookie matched.
 
 Extensions
 ----------
@@ -55,9 +58,10 @@ Examples and utilities
 - `examples/xlsatoms.py -n` reports a missing atom instead of creating it, and only catches `BadAtom`, so interrupts and unrelated errors are no longer reported as a missing atom.
 - `examples/put_selection.py` reads stdin as bytes, like it reads files.
 - `examples/xdamage.py` skips frames that fail to capture instead of crashing, and is executable.
-- `examples/dpms.py` exits with an error message instead of an `AssertionError` when DPMS is unavailable.
+- `examples/dpms.py` exits with an error message when DPMS is unavailable, including on servers without the extension such as VcXsrv, instead of an `AssertionError` or `UnboundLocalError`.
 - `examples/threadtest.py` works on Python 3.
 - `utils/parsexbug.py` and `utils/tcpbug.py` work on Python 3. `parsexbug.py` is executable, and `tcpbug.py` works under `python -S`.
+- `utils/tcpbug.py` works on Windows. It passed stdout to `select.select`, which only accepts sockets there.
 
 Dependencies and packaging
 --------------------------
@@ -68,7 +72,8 @@ Dependencies and packaging
 - Building no longer needs `setuptools` or `setuptools-scm`.
 - Built with `uv_build` from `pyproject.toml`. Building from source needs Python 3.8 or newer.
 - Wheels are `py3-none-any`, and the sdist is `.tar.gz`.
-- PyPy is tested in CI, on PyPy 3.8 and 3.12.
+- PyPy is tested in CI, on PyPy 3.6 and 3.12.
+- macOS (with XQuartz's Xvfb) is tested in CI on Python 3.5 and 3.15, and Windows (with VcXsrv) on Python 3.4 and 3.15.
 - The version is declared only in `pyproject.toml`. `Xlib.__version__` reads it from the installed metadata, and is `0+unknown` on Python 3.3 to 3.5 or from an uninstalled source tree.
 
 ---
