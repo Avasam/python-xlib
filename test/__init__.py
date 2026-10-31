@@ -88,6 +88,9 @@ class Xvfb(object):
     Use `start` and `stop` as a module's `setUpModule` and `tearDownModule`.
     While the server runs, `DISPLAY` and `XAUTHORITY` point to it, so
     subprocesses use it too.
+
+    If `XLIB_TEST_DISPLAY` is set, its server is used instead, such as
+    VcXsrv on Windows, where Xvfb is not available.
     """
 
     def __init__(self):
@@ -103,6 +106,11 @@ class Xvfb(object):
             raise
 
     def _start(self):
+        display = os.environ.get('XLIB_TEST_DISPLAY')
+        if display:
+            self.saved_environ = {'DISPLAY': os.environ.get('DISPLAY')}
+            os.environ['DISPLAY'] = display
+            return
         fd, self.authfile = tempfile.mkstemp(prefix='xlib-test-', suffix='.Xauthority')
         with os.fdopen(fd, 'wb') as f:
             # Xvfb loads every cookie in the file, and Xlib matches an entry
