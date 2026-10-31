@@ -106,7 +106,8 @@ jobs:
         shell: pwsh
         run: |
           choco install vcxsrv --yes --no-progress
-          Start-Process "$env:ProgramFiles\VcXsrv\vcxsrv.exe" -ArgumentList ':0', '-multiwindow', '-ac'
+          # `-noreset`, as for Xvfb: VcXsrv can crash resetting once the last client disconnects, refusing every later test
+          Start-Process "$env:ProgramFiles\VcXsrv\vcxsrv.exe" -ArgumentList ':0', '-multiwindow', '-ac', '-noreset'
           $deadline = (Get-Date).AddSeconds(30)
           while ($true) {
             try {
@@ -132,11 +133,21 @@ jobs:
         run: |
           # Fails on syntax newer than this Python, including in the examples and utilities the tests never import.
           python -m compileall -q Xlib test examples utils
+          # Python 3.4.4 on Windows can segfault while pip downloads, so retry on a segfault (exit code 139) only.
+          pip_install() {
+            for attempt in 1 2 3; do
+              python -m pip install --disable-pip-version-check "$@" && return
+              status=$?
+              [ "$status" -eq 139 ] || return "$status"
+              echo "::warning::pip segfaulted on attempt $attempt"
+            done
+            return "$status"
+          }
           # The last pip that supports every legacy Python. Python 3.4.4 bundles pip 7.1.2,
           # which predates `--require-hashes` and ignores `Requires-Python`.
-          python -m pip install --disable-pip-version-check pip==19.1.1
+          pip_install pip==19.1.1
           uv export --locked --no-emit-project --no-default-groups --group test --output-file "$RUNNER_TEMP/requirements.txt"
-          python -m pip install --disable-pip-version-check --require-hashes -r "$RUNNER_TEMP/requirements.txt"
+          pip_install --require-hashes -r "$RUNNER_TEMP/requirements.txt"
           python -m coverage run -m unittest -v
           python -m coverage report > coverage.txt
           python -m coverage html
