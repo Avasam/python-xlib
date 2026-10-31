@@ -39,11 +39,12 @@ class Xauthority(object):
             filename = os.environ.get('XAUTHORITY')
 
         if filename is None:
-            try:
-                filename = os.path.join(os.environ['HOME'], '.Xauthority')
-            except KeyError:
+            # Windows has no $HOME by default, libXau uses the user profile there
+            home = os.environ.get('HOME', os.environ.get('USERPROFILE'))
+            if home is None:
                 raise error.XauthError(
                     '$HOME not set, cannot find ~/.Xauthority')
+            filename = os.path.join(home, '.Xauthority')
 
         try:
             with open(filename, 'rb') as fp:

@@ -83,6 +83,10 @@ def _get_tcp_socket(host, dno):
 
 
 def _get_unix_socket(address):
+    # Python on Windows has no `AF_UNIX`, fail like a refused connection
+    # so that an implicit Unix socket connection falls back to TCP.
+    if not hasattr(socket, 'AF_UNIX'):
+        raise socket.error('Unix sockets are not supported on this platform')
     s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     try:
         s.connect(address)
@@ -116,7 +120,8 @@ def get_socket(dname, protocol, host, dno):
             except socket.error:
                 if not protocol and not host:
                     # If no protocol/host was specified, fallback to TCP.
-                    s = _get_tcp_socket(host, dno)
+                    # Windows refuses to connect to the empty (any) address.
+                    s = _get_tcp_socket('localhost', dno)
                 else:
                     raise
     except socket.error as val:

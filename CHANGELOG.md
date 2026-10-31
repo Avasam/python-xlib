@@ -39,6 +39,8 @@ Bug Fixes
   - `set_wm_icon_size`
 - `parse_binary_value` always returns its remaining data as `bytes`.
 - `import Xlib` imports the submodules listed in `Xlib.__all__`, and `Xlib.ext.__all__` is a list instead of a single-use iterator.
+- On Windows, `DISPLAY=:0` connects over TCP to `localhost` instead of raising `AttributeError`, and `unix/:0` raises `DisplayConnectionError`. Elsewhere, the TCP fallback for `:0` connects to `localhost` instead of the empty address.
+- When neither `XAUTHORITY` nor `HOME` is set, as is usual on Windows, `.Xauthority` is read from `USERPROFILE` like libXau does, instead of connecting without a cookie.
 
 Extensions
 ----------
@@ -49,6 +51,7 @@ Extensions
 Examples and utilities
 ----------------------
 
+- `examples/put_selection.py` answers `TARGETS` requests instead of crashing with `TypeError` on Python 3.
 - `examples/xlsatoms.py -n` reports a missing atom instead of creating it, and only catches `BadAtom`, so interrupts and unrelated errors are no longer reported as a missing atom.
 - `examples/put_selection.py` reads stdin as bytes, like it reads files.
 - `examples/xdamage.py` skips frames that fail to capture instead of crashing, and is executable.
