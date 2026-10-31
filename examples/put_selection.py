@@ -133,7 +133,7 @@ def main():
             # Is the client asking for which types we support?
             if e.target == targets_atom:
                 # Then respond with TARGETS and the type
-                prop_value = [targets_atom] + types.keys()
+                prop_value = [targets_atom] + list(types)
                 prop_type = Xatom.ATOM
                 prop_format = 32
 

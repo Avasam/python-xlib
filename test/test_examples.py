@@ -59,6 +59,27 @@ class TestExamples(unittest.TestCase):
         self.assertEqual(run_example("get_selection.py", "SECONDARY"), 0)
         self.assertEqual(run_example("get_selection.py", "CLIPBOARD"), 0)
 
+    def test_put_selection(self):
+        """ Run put_selection.py -- demonstrate putting selections, read back with get_selection.py """
+        # A private selection, so that clipboard managers do not take it over
+        # Unbuffered, since stderr is not line buffered before Python 3.9
+        put = subprocess.Popen(
+            [sys.executable, "-u", os.path.join(examples_folder, "put_selection.py"), "XLIB_TEST_SELECTION", "UTF8_STRING"],
+            stdin=subprocess.PIPE, stderr=subprocess.PIPE,
+        )
+        self.addCleanup(put.stderr.close)
+        self.addCleanup(put.wait)
+        self.addCleanup(put.kill)
+        put.stdin.write(b"hello")
+        put.stdin.close()
+        self.assertIn(b"took ownership", put.stderr.readline())
+
+        get = [sys.executable, os.path.join(examples_folder, "get_selection.py"), "XLIB_TEST_SELECTION"]
+        targets = subprocess.check_output(get + ["TARGETS"], stderr=subprocess.DEVNULL, timeout=10)
+        self.assertEqual(targets.decode().split(), ["TARGETS", "UTF8_STRING"])
+        data = subprocess.check_output(get + ["UTF8_STRING"], stderr=subprocess.DEVNULL, timeout=10)
+        self.assertEqual(data, b"hello")
+
     def test_profilex(self):
         """ Run profilex.py -- program to generate profiling data """
         output_dir = tempfile.mkdtemp()

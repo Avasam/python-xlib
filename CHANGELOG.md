@@ -51,6 +51,7 @@ Extensions
 Examples and utilities
 ----------------------
 
+- `examples/put_selection.py` answers `TARGETS` requests instead of crashing with `TypeError` on Python 3.
 - `examples/xlsatoms.py -n` reports a missing atom instead of creating it, and only catches `BadAtom`, so interrupts and unrelated errors are no longer reported as a missing atom.
 - `examples/put_selection.py` reads stdin as bytes, like it reads files.
 - `examples/xdamage.py` skips frames that fail to capture instead of crashing, and is executable.
