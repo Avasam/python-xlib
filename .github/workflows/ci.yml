@@ -3,7 +3,6 @@ name: CI
 on:
   push:
     branches: [avasam-python-xlib]
-    tags: ['*']
   pull_request:
   workflow_dispatch:
 
@@ -146,29 +145,3 @@ jobs:
         with:
           name: coverage-html-py${{ matrix.python-version }}${{ matrix.platform != 'native' && format('-{0}', matrix.platform) || '' }}
           path: htmlcov/
-
-  release:
-    name: Publish GitHub release
-    needs: [Ruff, test, test-docker]
-    if: startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-24.04-arm
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - uses: astral-sh/setup-uv@v10.3.3
-
-      - name: Build sdist and wheel
-        run: uv build
-
-      - name: Upload to GitHub release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
-        run: |
-          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 \
-            || gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "$TAG" --verify-tag --notes ""
-          gh release upload "$TAG" dist/*.tar.gz dist/*.whl --repo "$GITHUB_REPOSITORY" --clobber

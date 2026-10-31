@@ -1,107 +1,184 @@
 NEWS for Python X Library
 
+Unreleased
+==========
+
+Breaking Changes
+----------------
+
+- Python 2, end of life since 2020, is no longer supported. Python 3.3 or newer is required.
+- The `six` helpers that modules imported are no longer reachable from them:
+  - `Xlib.display.create_unbound_method`
+  - `Xlib.ext.xinput.integer_types`
+  - `Xlib.protocol.display`: `PY3`, `byte2int`, `indexbytes`
+  - `Xlib.protocol.rq`: `PY3`, `binary_type`, `byte2int`, `indexbytes`, `iterbytes`
+
+Performance
+-----------
+
+- Large replies are received much faster, by no longer copying everything received so far on each socket read. A full 3840x2160 `GetImage` on Xvfb went from ~245 ms to ~70 ms.
+- Replies and events index bytes directly instead of calling `six` helpers while parsing.
+- Minor speedups in keyboard and modifier mapping parsing, and request sending.
+
+Bug Fixes
+---------
+
+- `Display.list_fonts_with_info` works on Python 3.
+- `Str` fields count UTF-8 bytes in their length prefix, so non-ASCII text and strings of 128 bytes or more no longer corrupt the request. `bytes` values are accepted, and strings over 255 bytes raise `ValueError`.
+- Xauthority entries of family `FamilyWild` are matched like libXau does, so connecting still works when the hostname no longer matches the one in the entry, as with Mutter's XWayland (thanks [@barlowa124][barlowa124]).
+- Sockets are closed when connecting fails, instead of leaking until garbage collected (thanks [@CristiFati][CristiFati]).
+- `unix_connect.old_get_auth` (unused by default) decodes the `xauth list` cookie on Python 3, and calls `xauth` without going through a shell.
+- `ResourceDB.insert_file` accepts `str` file names, and closes the file it opens when given a path.
+- `Colormap.copy_colormap_and_free` no longer always raises `NameError`.
+- `Window.set_wm_colormap_windows` no longer raises `TypeError` on Python 3.
+- `Display.keysym_to_keycodes` always returns a list. It used to return a single-use iterator when the keysym was found.
+- These `Window` methods default `hints` to `None` instead of a mutable `dict` shared between calls, so passing `hints=None` explicitly works too:
+  - `set_wm_normal_hints`
+  - `set_wm_hints`
+  - `set_wm_state`
+  - `set_wm_icon_size`
+- `parse_binary_value` always returns its remaining data as `bytes`.
+- `import Xlib` imports the submodules listed in `Xlib.__all__`, and `Xlib.ext.__all__` is a list instead of a single-use iterator.
+
+Extensions
+----------
+
+- Xinerama: `Display.xinerama_get_info` returns the reply instead of `None`.
+- Record: `EnableContext` no longer raises `TypeError` when given extra positional arguments.
+
+Examples and utilities
+----------------------
+
+- `examples/xlsatoms.py -n` reports a missing atom instead of creating it, and only catches `BadAtom`, so interrupts and unrelated errors are no longer reported as a missing atom.
+- `examples/put_selection.py` reads stdin as bytes, like it reads files.
+- `examples/xdamage.py` skips frames that fail to capture instead of crashing, and is executable.
+- `examples/dpms.py` exits with an error message instead of an `AssertionError` when DPMS is unavailable.
+- `examples/threadtest.py` works on Python 3.
+- `utils/parsexbug.py` and `utils/tcpbug.py` work on Python 3. `parsexbug.py` is executable, and `tcpbug.py` works under `python -S`.
+
+Dependencies and packaging
+--------------------------
+
+- First release of the fork, published on PyPI as `avasam-python-xlib`. It is a drop-in replacement for `python-xlib`: the import name is still `Xlib`.
+- `six` is no longer a dependency (thanks [@a-detiste][a-detiste]). Python 3.8 and newer have no runtime dependencies.
+- Python 3.6 and 3.7 depend on the `importlib-metadata` backport, to read `Xlib.__version__`.
+- Building no longer needs `setuptools` or `setuptools-scm`.
+- Built with `uv_build` from `pyproject.toml`. Building from source needs Python 3.8 or newer.
+- Wheels are `py3-none-any`, and the sdist is `.tar.gz`.
+- The version is declared only in `pyproject.toml`. `Xlib.__version__` reads it from the installed metadata, and is `0+unknown` on Python 3.3 to 3.5 or from an uninstalled source tree.
+
+---
+
 Version 0.33
 ============
 
 Bug Fixes
 ---------
 
-- Removed unused imports (thanks @Avasam).
-- Avoid to use fcntl module on some environments (thanks @i2y).
-- Change a test behavior for `unix_connect.get_socket` (thanks @i2y).
-- Fix accidental data change (thanks @Avasam).
-- Prefer `bool` over `Literal[0, 1, None]` (thanks @Avasam).
-- Change parentheses to brackets in LICENSE (thanks @mtelka).
+- Removed unused imports (thanks [@Avasam][Avasam]).
+- Avoid to use fcntl module on some environments (thanks [@i2y][i2y]).
+- Change a test behavior for `unix_connect.get_socket` (thanks [@i2y][i2y]).
+- Fix accidental data change (thanks [@Avasam][Avasam]).
+- Prefer `bool` over `Literal[0, 1, None]` (thanks [@Avasam][Avasam]).
+- Change parentheses to brackets in LICENSE (thanks [@mtelka][mtelka]).
 
 ---
+
 Version 0.32
 ============
 
 Bug Fixes
 ---------
 
-- Use archived link for X documentation resource (thanks @yaxollum).
-- Fix for auth entry having no display number (thanks @Majiir).
-- Fix return type inconsistency with the `pack_value` for class `Object` (thanks @allfro).
-- Rename `add_extension_error` method to `extension_add_error` (thanks @mattalexx).
+- Use archived link for X documentation resource (thanks [@yaxollum][yaxollum]).
+- Fix for auth entry having no display number (thanks [@Majiir][Majiir]).
+- Fix return type inconsistency with the `pack_value` for class `Object` (thanks [@allfro][allfro]).
+- Rename `add_extension_error` method to `extension_add_error` (thanks [@mattalexx][mattalexx]).
 
 Extensions
 --------------------
 
-- screensaver: fix screensaver protocol mismatch (thanks @yut23).
-- XRandr: add version 1.5 support for RRSetMonitor RRGetMonitors and RRDeleteMonitors (thanks @allfro and @jklong).
+- screensaver: fix screensaver protocol mismatch (thanks [@yut23][yut23]).
+- XRandr: add version 1.5 support for RRSetMonitor RRGetMonitors and RRDeleteMonitors (thanks [@allfro][allfro] and [@jklong][jklong]).
 
 ---
+
 Version 0.31
 ============
 
 Extensions
 --------------------
 
-- XInput: add event methods (thanks @dd4e).
+- XInput: add event methods (thanks [@dd4e][dd4e]).
 
 ---
+
 Version 0.30
 ============
 
 Extensions
 --------------------
 
-- XResource: first implementation (thanks @alebastr).
-- XRandr: add missing parameters to delete_output_mode function (thanks @jimmy-loyola).
+- XResource: first implementation (thanks [@alebastr][alebastr]).
+- XRandr: add missing parameters to delete_output_mode function (thanks [@jimmy-loyola][jimmy-loyola]).
 
 ---
+
 Version 0.29
 ============
 
 Extensions
 --------------------
 
-- Drawable & XInput: Avoid using array.array.tostring() which wiil be removed in Python 3.9 (thanks @t-wissmann).
+- Drawable & XInput: Avoid using array.array.tostring() which wiil be removed in Python 3.9 (thanks [@t-wissmann][t-wissmann]).
 
 ---
+
 Version 0.28
 ============
 
 Extensions
 --------------------
 
-- DPMS: Display Power Management Signaling (by @thiagokokada)
+- DPMS: Display Power Management Signaling (by [@thiagokokada][thiagokokada])
 
 ---
+
 Version 0.27
 ============
 
 Bug Fixes
 ---------
 
-- fix TypeError in socket.error exception handling for Python 3.x (by @t-wissmann)
+- fix TypeError in socket.error exception handling for Python 3.x (by [@t-wissmann][t-wissmann])
 
 Extensions
 --------------------
 
-- NV-CONTROL: set offset for all perf levels (by @Sporif)
+- NV-CONTROL: set offset for all perf levels (by [@Sporif][Sporif])
 
 ---
+
 Version 0.26
 ============
 
 Bug Fixes
 ---------
 
-- support legacy X servers like RealVNC's one (by @Gerardwx)
+- support legacy X servers like RealVNC's one (by [@Gerardwx][Gerardwx])
 
 Extensions
 --------------------
 
-- enrich XFixes extension with XFixesSelectionNotify events (by @acrisci)
-- add example xfixes-selection-notify.py (by @acrisci)
-- fix two issues in NV-CONTROL extension (by @leinardi)
-- add method get_clock_info into NV-CONTROL extension (by @leinardi)
-- add default client version into Composite extension (by @jakogut)
-- add Damage extension with the example (by @mgarg1 and @jakogut)
+- enrich XFixes extension with XFixesSelectionNotify events (by [@acrisci][acrisci])
+- add example xfixes-selection-notify.py (by [@acrisci][acrisci])
+- fix two issues in NV-CONTROL extension (by [@leinardi][leinardi])
+- add method get_clock_info into NV-CONTROL extension (by [@leinardi][leinardi])
+- add default client version into Composite extension (by [@jakogut][jakogut])
+- add Damage extension with the example (by [@mgarg1][mgarg1] and [@jakogut][jakogut])
 
 ---
+
 Version 0.25
 ============
 
@@ -113,9 +190,10 @@ Bug Fixes
 NV-CONTROL extension
 --------------------
 
-- add first implementation by Roberto Leinardi (@leinardi)
+- add first implementation by Roberto Leinardi ([@leinardi][leinardi])
 
 ---
+
 Version 0.24
 ============
 
@@ -135,6 +213,7 @@ Misc
 - fix a bunch of typos in the code / documentation
 
 ---
+
 Version 0.23
 ============
 
@@ -144,6 +223,7 @@ Bug Fixes
 - fix strings decoding: use Latin-1
 
 ---
+
 Version 0.22
 ============
 
@@ -154,6 +234,7 @@ Bug Fixes
 - fix `Drawable.put_pil_image` implementation
 
 ---
+
 Version 0.21
 ============
 
@@ -171,6 +252,7 @@ Misc
   but use the currently installed version instead.
 
 ---
+
 Version 0.20
 ============
 
@@ -190,6 +272,7 @@ Improve response processing performance: reduce the number of
 `socket.recv` calls needed to receive a full response.
 
 ---
+
 Version 0.19
 ============
 
@@ -202,6 +285,7 @@ Bug Fixes
   correctly handle `unix:0.0` as `:0.0`
 
 ---
+
 Version 0.18
 ============
 
@@ -213,6 +297,7 @@ Bug Fixes
 - fix Unix socket support when only an abstract address is available
 
 ---
+
 Version 0.17
 ============
 
@@ -239,9 +324,10 @@ Core:
 
 Composite extension:
 
--   support for `GetOverlayWindow` request
+- support for `GetOverlayWindow` request
 
 ---
+
 Version 0.16
 ============
 
@@ -278,6 +364,7 @@ Bug Fixes
 - several fixes for the RandR extension
 
 ---
+
 Version 0.15rc1 - 14 Nov 2009
 =============================
 
@@ -316,6 +403,7 @@ the physical screens making up a virtual screen in X. An example of
 usage can be found in [examples/xrandr.py](examples/xrandr.py).
 
 ---
+
 Version 0.14 - 1 Oct 2007 (trialed as 0.14rc1 on 10 Jun 2007)
 =============================================================
 
@@ -349,6 +437,7 @@ Bugfix to correct handling of XAuthority file parsing under Python 2.5
 causing failed authentication.
 
 ---
+
 Version 0.13 - 6 Aug 2006 (trialed as 0.13pre1 on 22 Jul 2006)
 ==============================================================
 
@@ -359,6 +448,7 @@ parsing, several fixes to sending/receiving/flushing data, addition of
 `Display` objects.
 
 ---
+
 Version 0.12 - 29 Mar 2002
 ==========================
 
@@ -378,6 +468,7 @@ is deprecated, so that had to be dealt with to make the Xlib work with
 that version.
 
 ---
+
 Version 0.11 - 23 Feb 2002
 ==========================
 
@@ -396,6 +487,7 @@ Additionally, a subtle bug in the core engine which could cause a
 "can't happen"-error has also been found and fixed.
 
 ---
+
 Version 0.10 - 16 Dec 2001
 ==========================
 
@@ -423,6 +515,7 @@ that will work on some combinations of image and drawable depth. It's
 not perfect, but it's a start.
 
 ---
+
 Version 0.9 - 4 Dec 2001
 ========================
 
@@ -464,6 +557,7 @@ Some response attributes in `Xlib.protocol.request` accidentally included
 a comma.
 
 ---
+
 Version 0.8 - 12 Jan 2001
 =========================
 
@@ -479,10 +573,11 @@ Tested with Python 2.0
 A few incompatibilities with Python 2.0 has been fixed.
 
 ---
+
 Version 0.7 - 8 Jan 2001
 ========================
 
-Fixed the 64-bit platform fix.
+Fixed the 64-bit platform fix
 ------------------------------
 
 As it turns out, the attempted fix for 64-bit platforms in v0.6 didn't
@@ -501,10 +596,11 @@ Interested Python hackers are recommended to take a look at the Struct
 class in `Xlib/protocol/rq.py`.
 
 ---
+
 Version 0.6 - 29 Dec 2000
 =========================
 
-Fix to make python-xlib work on 64-bytes architectures.
+Fix to make python-xlib work on 64-bytes architectures
 -------------------------------------------------------
 
 The struct and array modules uses `sizeof(long)` to determine the number
@@ -513,6 +609,7 @@ this is 32 bits as expected. On Alpha, it's 64 bits. python-xlib now
 probes how large each type code is to avoid this problem.
 
 ---
+
 Version 0.5 - 28 Dec 2000
 =========================
 
@@ -530,6 +627,7 @@ Version 0.5 - 28 Dec 2000
   errors and events in a readable format.
 
 ---
+
 Version 0.4 - 4 Oct 2000
 ========================
 
@@ -543,6 +641,7 @@ Version 0.4 - 4 Oct 2000
 - The usual bunch of bugfixes.
 
 ---
+
 Historical ChangeLog
 ====================
 
@@ -703,3 +802,28 @@ The ChangeLog hadn't been maintained since 2002, but some of the more significan
 - `Xlib/protocol/rq.py`:
   - (`DictWrapper.__setitem__`, `DictWrapper.__delitem__`, `DictWrapper.__setattr__`, `DictWrapper.__delattr__`): Add a few methods to the `DictWrapper`, to make sure that even if attributes are changed, all attributes can be found in the `_data` mapping.
   - (`ValueField.__init__`, `Object.__init__`, `ValueField.pack_value`, `Set.__init__`): Added a default parameter, so that structure elements with a default value can be omitted when calling `build_from_args`.
+
+<!-- Create short-form markdown user links -->
+[a-detiste]: https://github.com/a-detiste
+[acrisci]: https://github.com/acrisci
+[alebastr]: https://github.com/alebastr
+[allfro]: https://github.com/allfro
+[Avasam]: https://github.com/Avasam
+[barlowa124]: https://github.com/barlowa124
+[CristiFati]: https://github.com/CristiFati
+[dd4e]: https://github.com/dd4e
+[Gerardwx]: https://github.com/Gerardwx
+[i2y]: https://github.com/i2y
+[jakogut]: https://github.com/jakogut
+[jimmy-loyola]: https://github.com/jimmy-loyola
+[jklong]: https://github.com/jklong
+[leinardi]: https://github.com/leinardi
+[Majiir]: https://github.com/Majiir
+[mattalexx]: https://github.com/mattalexx
+[mgarg1]: https://github.com/mgarg1
+[mtelka]: https://github.com/mtelka
+[Sporif]: https://github.com/Sporif
+[t-wissmann]: https://github.com/t-wissmann
+[thiagokokada]: https://github.com/thiagokokada
+[yaxollum]: https://github.com/yaxollum
+[yut23]: https://github.com/yut23

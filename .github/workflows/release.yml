@@ -1,0 +1,126 @@
+name: Release
+
+# Publishes when a push to the main branch carries a `pyproject.toml` version that has no tag yet.
+# The tag is created from that version, so the two cannot disagree. See CONTRIBUTING.md.
+# PyPI trusts this workflow file only, which never runs on pull requests.
+on:
+  push:
+    branches: [avasam-python-xlib]
+
+permissions: {}
+
+# Queue instead of cancelling, so a later push sees the tag of a release still in progress.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Check for a new version
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Read version and look for its tag
+        id: version
+        run: |
+          version=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          # Exit code 2 means no matching tag, anything else is a real failure.
+          if git ls-remote --exit-code --tags origin "refs/tags/$version" >/dev/null; then
+            echo "Tag $version already exists, nothing to release."
+            exit 0
+          else
+            status=$?
+            [ "$status" -eq 2 ] || exit "$status"
+          fi
+
+          if ! sh .github/scripts/changelog-section.sh "Version $version" >/dev/null; then
+            echo "::error file=CHANGELOG.md::Add a 'Version $version' section before bumping the version."
+            exit 1
+          fi
+          if sh .github/scripts/changelog-section.sh Unreleased >/dev/null 2>&1; then
+            echo "::error file=CHANGELOG.md::Move the 'Unreleased' entries under 'Version $version'."
+            exit 1
+          fi
+
+          echo "Releasing $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build distributions
+    needs: check
+    if: needs.check.outputs.version != ''
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@v10.3.3
+
+      - name: Build sdist and wheel
+        run: uv build
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist
+          path: dist/
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: [check, build]
+    runs-on: ubuntu-24.04-arm
+    environment:
+      name: pypi
+      url: https://pypi.org/project/avasam-python-xlib/${{ needs.check.outputs.version }}/
+    permissions:
+      # Trusted publishing and attestations
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist
+          path: dist/
+
+      - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
+
+  # After PyPI, which cannot be undone, so a rejected upload leaves no tag or GitHub release behind.
+  release:
+    name: Publish GitHub release
+    needs: [check, publish-pypi]
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist
+          path: dist/
+
+      # Creating the release also creates its tag on the released commit.
+      # Safe to re-run: an existing release only gets its files replaced.
+      - name: Create tag and GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          # Turn the changelog's `[@user][user]` links back into plain mentions,
+          # which GitHub only recognizes bare, to list them as release contributors.
+          sh .github/scripts/changelog-section.sh "Version $VERSION" \
+            | sed -E 's/\[@([A-Za-z0-9-]+)\]\[\1\]/@\1/g' > "$RUNNER_TEMP/notes.md"
+          gh release view "$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 \
+            || gh release create "$VERSION" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+              --title "$VERSION" --notes-file "$RUNNER_TEMP/notes.md"
+          gh release upload "$VERSION" dist/*.tar.gz dist/*.whl --repo "$GITHUB_REPOSITORY" --clobber
