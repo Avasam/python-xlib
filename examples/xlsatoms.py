@@ -62,7 +62,7 @@ def list_atoms(d,re_obj,low,high):
             elif re_obj.match(val) != None:
                 print_atom(options.format,low,val)
             low += 1
-        except:
+        except error.BadAtom:
             sys.exit(0)
 
 if options.name != None:
@@ -70,7 +70,7 @@ if options.name != None:
         atom = d.intern_atom(options.name, only_if_exists=True)
         val = d.get_atom_name(atom)
         print_atom(options.format,atom,val)
-    except:
+    except error.BadAtom:
         sys.stderr.write('xlsatoms:  no atom named "%s" on server "%s"'%(options.name,options.display))
         sys.stderr.write("\n")
         sys.exit(1)

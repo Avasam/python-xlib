@@ -71,9 +71,12 @@ class ResourceDB(object):
         """
 
         if isinstance(file, (str, bytes)):
-            file = open(file, 'r')
+            with open(file, 'r') as f:
+                data = f.read()
+        else:
+            data = file.read()
 
-        self.insert_string(file.read())
+        self.insert_string(data)
 
 
     def insert_string(self, data):

@@ -1452,7 +1452,7 @@ class Event(GetAttrData):
 def call_error_handler(handler, error, request):
     try:
         return handler(error, request)
-    except:
+    except Exception:  # noqa: BLE001 # Error handlers are user code and may raise anything
         sys.stderr.write('Exception raised by error handler.\n')
         traceback.print_exc()
         return 0

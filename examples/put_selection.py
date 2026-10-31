@@ -68,15 +68,14 @@ def main():
         type_atom = d.get_atom(args[0])
         del args[0]
 
+        # Limit selection size to avoid implementing INCR
         if args:
-            f = open(args[0], 'rb')
+            with open(args[0], 'rb') as f:
+                data = f.read(MAX_SIZE)
             del args[0]
         else:
-            f = sys.stdin.buffer
-
-        # Limit selection size to avoid implementing INCR
-        data = f.read(MAX_SIZE)
-        f.close()
+            data = sys.stdin.buffer.read(MAX_SIZE)
+            sys.stdin.close()
 
         if len(data) >= MAX_SIZE:
             log('too much data: {0} bytes, max is {1} bytes', len(data), MAX_SIZE)

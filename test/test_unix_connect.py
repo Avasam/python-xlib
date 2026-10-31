@@ -53,7 +53,7 @@ class TestUnixConnect(unittest.TestCase):
             u'tcp/bàr:1',
             u'unix/fòóbàr:2',
             # Bad protocol.
-            'udp/foo:0'
+            'udp/foo:0',
             # With explicit TCP connections, hostname must be set.
             'tcp/:0',
         ):
@@ -167,13 +167,13 @@ class TestUnixConnect(unittest.TestCase):
             warnings.simplefilter("error", ResourceWarning)
             try:
                 unix_connect._get_tcp_socket("invalid!", 0x10000)
-            except:
+            except (OSError, OverflowError):
                 pass
             finally:
                 gc.collect()
             try:
                 unix_connect._get_unix_socket('/tmp/too_long_socket_name' + ' ' * 1024)
-            except:
+            except OSError:
                 pass
             finally:
                 gc.collect()

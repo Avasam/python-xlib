@@ -869,20 +869,18 @@ class Display(object):
             return None
 
         # Normalize sequence numbers, even if they have wrapped.
-        # This ensures that
+        # This ensures that, with last_serial being self.request_serial
+        # plus 65536 if the serials wrapped since the oldest sent request,
         #   sno <= last_serial
         # and
         #   self.sent_requests[0]._serial <= last_serial
 
         if self.sent_requests[0]._serial > self.request_serial:
-            last_serial = self.request_serial + 65536
             if sno < self.request_serial:
                 sno = sno + 65536
 
-        else:
-            last_serial = self.request_serial
-            if sno > self.request_serial:
-                sno = sno - 65536
+        elif sno > self.request_serial:
+            sno = sno - 65536
 
         # No matching events at all
         if sno < self.sent_requests[0]._serial:

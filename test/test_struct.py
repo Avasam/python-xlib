@@ -88,7 +88,7 @@ def _struct_test(name, fields):
         elif isinstance(field_binary, (types.FunctionType, types.LambdaType, partial)):
             binary += field_binary(field_value_in)
         else:
-            raise ValueError('unsupported type for binary: {data} [{type}]'.format(
+            raise TypeError('unsupported type for binary: {data} [{type}]'.format(
                 data=str(field_binary), type=type(field_binary))
             )
     class_dict = {

@@ -208,7 +208,7 @@ class GetInfo(rq.ReplyRequest):
         )
 
 def get_info(self, visual):
-    r = GetInfo(display=self.display,
+    return GetInfo(display=self.display,
              opcode=self.display.get_extension_major(extname),
              visual=visual)
 
