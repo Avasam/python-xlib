@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Xlib.protocol.display -- core display communication
 #

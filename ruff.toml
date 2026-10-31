@@ -8,7 +8,6 @@ ignore = [
   # Rules that have no performance or correctness impact whatsoever, so we reduce churn in this fork
   ###
   "I001", # unsorted-imports
-  "N999", # invalid-module-name: renaming would break the public API
   "PIE790", # unnecessary-placeholder
   "PIE808", # unnecessary-range-start
   "PLW0120", # useless-else-on-loop
@@ -18,7 +17,6 @@ ignore = [
   "SIM102", # collapsible-if
   "SIM114", # if-with-same-arms
   "UP004", # useless-object-inheritance
-  "UP009", # utf8-encoding-declaration
   "UP024", # os-error-alias: already the same class since Python 3.3
   "UP025", # unicode-kind-prefix
   "UP030", # format-literals
@@ -125,6 +123,11 @@ ignore = [
 ]
 # F401 would remove imports not marked as explicit re-exports, which may break API boundaries
 extend-unsafe-fixes = ["F401"]
+
+[lint.per-file-ignores]
+"Xlib/**" = [
+  "N999", # invalid-module-name: renaming would break the public API
+]
 
 # https://docs.astral.sh/ruff/settings/#flake8-implicit-str-concat
 [lint.flake8-implicit-str-concat]
