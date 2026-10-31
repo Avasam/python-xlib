@@ -6,6 +6,10 @@ Every user-facing change adds its entry to the `Unreleased` section at the top o
 
 Credit contributors other than the maintainer as `(thanks [@user][user])`, and add `[user]: https://github.com/user` to the sorted list of links at the end of the file if it is not there yet.
 
+## Type stubs
+
+The `.pyi` stubs in `Xlib/` come from typeshed and are licensed under Apache-2.0 (see [LICENSE-typeshed](LICENSE-typeshed)), which requires modified files to carry a prominent notice of the change. The first change to a stub adds `# Modified from typeshed` as its first line. A stub that already has that line needs nothing more.
+
 ## Releasing (maintainers)
 
 The version in `pyproject.toml` is the single source of truth. When a push to `Avasam/python-xlib` carries a version that has no tag yet, [release.yml](.github/workflows/release.yml) publishes to PyPI through trusted publishing, then creates the tag and the GitHub release on that commit. Tags are never created by hand, so the tag, PyPI and `Xlib.__version__` cannot disagree.

@@ -46,6 +46,11 @@ The Python X Library is released under LGPL v2.1 or later (since 2016),
 see the file LICENSE for details. 0.15rc1 and before were released under
 GPL v2.
 
+The type stubs (the ``.pyi`` files in ``Xlib/``) come from typeshed's
+`types-python-xlib`_ and are released under the Apache License 2.0, see the
+file LICENSE-typeshed for details. They may have been modified since, the git
+history records every change.
+
 Requirements
 ~~~~~~~~~~~~
 
