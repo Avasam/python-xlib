@@ -1,3 +1,4 @@
+# Modified from typeshed
 from collections.abc import Callable, Iterable, Sequence
 from re import Pattern
 from types import FunctionType, MethodType
@@ -28,7 +29,7 @@ _ResourceBaseClass: TypeAlias = (
 
 # Is the type of the `_resource_baseclasses` variable, defined in this file at runtime
 @type_check_only
-class _ResourceBaseClassesType(TypedDict):  # noqa: Y049
+class _ResourceBaseClassesType(TypedDict):  # noqa: PYI049
     resource: type[_resource.Resource]
     drawable: type[_drawable.Drawable]
     window: type[_drawable.Window]

@@ -1,5 +1,6 @@
-from Xlib.keysymdef.latin1 import *
-from Xlib.keysymdef.miscellany import *
+# Modified from typeshed
+from Xlib.keysymdef.latin1 import *  # noqa: F403
+from Xlib.keysymdef.miscellany import *  # noqa: F403
 from Xlib.X import NoSymbol as NoSymbol
 
 def string_to_keysym(keysym: str) -> int: ...
