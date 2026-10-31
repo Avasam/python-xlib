@@ -17,9 +17,9 @@ def tcpbug(listenaddr, destaddr, outputfd):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.connect(destaddr)
 
-    cwbuf = swbuf = outbuf = b''
+    cwbuf = swbuf = b''
 
-    while client or server or outbuf:
+    while client or server:
         readset = []
         if client:
             readset.append(client)
@@ -31,16 +31,15 @@ def tcpbug(listenaddr, destaddr, outputfd):
             writeset.append(client)
         if swbuf and server:
             writeset.append(server)
-        if outbuf:
-            writeset.append(outputfd)
 
+        # Only sockets, Windows' select() rejects other file descriptors.
         readset, writeset, e = select.select(readset, writeset, [])
 
         if client in readset:
             data = client.recv(2000)
             if data:
                 swbuf = swbuf + data
-                outbuf = outbuf + ('C%d\n' % len(data)).encode() + data
+                write_all(outputfd, ('C%d\n' % len(data)).encode() + data)
             else:
                 client.close()
                 client = None
@@ -49,7 +48,7 @@ def tcpbug(listenaddr, destaddr, outputfd):
             data = server.recv(2000)
             if data:
                 cwbuf = cwbuf + data
-                outbuf = outbuf + ('S%d\n' % len(data)).encode() + data
+                write_all(outputfd, ('S%d\n' % len(data)).encode() + data)
             else:
                 server.close()
                 server = None
@@ -62,10 +61,6 @@ def tcpbug(listenaddr, destaddr, outputfd):
             n = server.send(swbuf)
             swbuf = swbuf[n:]
 
-        if outputfd in writeset:
-            n = os.write(outputfd, outbuf)
-            outbuf = outbuf[n:]
-
         if client and not cwbuf and not server:
             client.close()
             client = None
@@ -73,6 +68,11 @@ def tcpbug(listenaddr, destaddr, outputfd):
         if server and not swbuf and not client:
             server.close()
             server = None
+
+def write_all(fd, data):
+    while data:
+        n = os.write(fd, data)
+        data = data[n:]
 
 def main():
     try:

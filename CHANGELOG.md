@@ -59,6 +59,7 @@ Examples and utilities
 - `examples/dpms.py` exits with an error message instead of an `AssertionError` when DPMS is unavailable.
 - `examples/threadtest.py` works on Python 3.
 - `utils/parsexbug.py` and `utils/tcpbug.py` work on Python 3. `parsexbug.py` is executable, and `tcpbug.py` works under `python -S`.
+- `utils/tcpbug.py` works on Windows. It passed stdout to `select.select`, which only accepts sockets there.
 
 Dependencies and packaging
 --------------------------
