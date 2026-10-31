@@ -39,6 +39,7 @@ Bug Fixes
   - `set_wm_icon_size`
 - `parse_binary_value` always returns its remaining data as `bytes`.
 - `import Xlib` imports the submodules listed in `Xlib.__all__`, and `Xlib.ext.__all__` is a list instead of a single-use iterator.
+- On Windows, `DISPLAY=:0` connects over TCP to `localhost` instead of raising `AttributeError`, and `unix/:0` raises `DisplayConnectionError`. Elsewhere, the TCP fallback for `:0` connects to `localhost` instead of the empty address.
 
 Extensions
 ----------

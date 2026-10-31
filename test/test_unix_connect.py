@@ -2,6 +2,7 @@ from functools import partial
 import gc
 import socket
 import sys
+import types
 import unittest
 import warnings
 from unittest.mock import patch
@@ -123,13 +124,13 @@ class TestUnixConnect(unittest.TestCase):
             ((':2', None, '', 2), False, False, True, False, [
                 ('os.path.exists', '/tmp/.X11-unix/X2'),
                 ('_get_unix_socket', '\0/tmp/.X11-unix/X2'),
-                ('_get_tcp_socket', '', 2),
+                ('_get_tcp_socket', 'localhost', 2),
             ]),
             # Failed implicit Unix socket connection, failed fallback on TCP.
             ((':1', None, '', 1), False, False, False, True, [
                 ('os.path.exists', '/tmp/.X11-unix/X1'),
                 ('_get_unix_socket', '\0/tmp/.X11-unix/X1'),
-                ('_get_tcp_socket', '', 1),
+                ('_get_tcp_socket', 'localhost', 1),
             ]),
         ):
             with \
@@ -179,6 +180,33 @@ class TestUnixConnect(unittest.TestCase):
                 pass
             finally:
                 gc.collect()
+
+
+class TestNoUnixSocketSupport(unittest.TestCase):
+    """Python on Windows has no `socket.AF_UNIX`."""
+
+    def setUp(self):
+        no_unix_socket = types.SimpleNamespace(**{
+            name: value for name, value in vars(socket).items() if name != 'AF_UNIX'
+        })
+        for target, new in (
+            ('Xlib.support.unix_connect.socket', no_unix_socket),
+            ('Xlib.support.unix_connect._ensure_not_inheritable', lambda sock: None),
+            ('os.path.exists', lambda path: False),
+        ):
+            patcher = patch(target, new)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def test_implicit_unix_socket_falls_back_to_tcp(self):
+        with patch('Xlib.support.unix_connect._get_tcp_socket') as get_tcp_socket:
+            s = unix_connect.get_socket(':0', None, '', 0)
+        self.assertIs(s, get_tcp_socket.return_value)
+        get_tcp_socket.assert_called_once_with('localhost', 0)
+
+    def test_explicit_unix_socket_fails_cleanly(self):
+        with self.assertRaises(DisplayConnectionError):
+            unix_connect.get_socket('unix/:0', 'unix', '', 0)
 
 
 if __name__ == '__main__':
