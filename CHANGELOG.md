@@ -42,6 +42,7 @@ Bug Fixes
 - On Windows, `DISPLAY=:0` connects over TCP to `localhost` instead of raising `AttributeError`, and `unix/:0` raises `DisplayConnectionError`. Elsewhere, the TCP fallback for `:0` connects to `localhost` instead of the empty address.
 - When neither `XAUTHORITY` nor `HOME` is set, as is usual on Windows, `.Xauthority` is read from `USERPROFILE` like libXau does, instead of connecting without a cookie.
 - On macOS, a `DISPLAY` that names XQuartz's socket connects to that socket. Its protocol was parsed as `None`, so `/tmp/.X11-unix/X<n>` was tried instead.
+- On macOS, the launchd socket path XQuartz sets in `DISPLAY` (`/private/tmp/com.apple.launchd.<id>/org.xquartz:0`) no longer raises `DisplayNameError`.
 
 Extensions
 ----------

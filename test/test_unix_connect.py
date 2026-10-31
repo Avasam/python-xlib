@@ -221,6 +221,9 @@ class TestDarwinConnect(unittest.TestCase):
         for display, expected in (
             ('/private/tmp/org.xquartz:0', ('darwin', None, 0, 0)),
             ('/private/tmp/org.xquartz:1.2', ('darwin', None, 1, 2)),
+            # The socket is in a directory launchd creates.
+            ('/private/tmp/com.apple.launchd.AbC123/org.xquartz:0', ('darwin', None, 0, 0)),
+            ('/private/tmp/com.apple.launchd.AbC123/org.macosforge.xquartz:0', ('darwin', None, 0, 0)),
             # Not a launchd socket, parsed as usual.
             (':0', (None, '', 0, 0)),
         ):
