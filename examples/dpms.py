@@ -33,7 +33,8 @@ class DPMSExamples(object):
     def __init__(self):
         self.d = display.Display()
 
-        if not self.d.dpms_capable():
+        # The `dpms_*` methods only exist when the server has the extension.
+        if not self.d.has_extension(dpms.extname) or not self.d.dpms_capable():
             sys.exit('DPMS is not supported in your system')
 
         self.initial_info = self.d.dpms_info()
@@ -96,9 +97,8 @@ class DPMSExamples(object):
 
 
 def main():
+    examples = DPMSExamples()
     try:
-        examples = DPMSExamples()
-
         print('Initial state')
         examples.print_dpms()
 

@@ -58,7 +58,7 @@ Examples and utilities
 - `examples/xlsatoms.py -n` reports a missing atom instead of creating it, and only catches `BadAtom`, so interrupts and unrelated errors are no longer reported as a missing atom.
 - `examples/put_selection.py` reads stdin as bytes, like it reads files.
 - `examples/xdamage.py` skips frames that fail to capture instead of crashing, and is executable.
-- `examples/dpms.py` exits with an error message instead of an `AssertionError` when DPMS is unavailable.
+- `examples/dpms.py` exits with an error message when DPMS is unavailable, including on servers without the extension such as VcXsrv, instead of an `AssertionError` or `UnboundLocalError`.
 - `examples/threadtest.py` works on Python 3.
 - `utils/parsexbug.py` and `utils/tcpbug.py` work on Python 3. `parsexbug.py` is executable, and `tcpbug.py` works under `python -S`.
 - `utils/tcpbug.py` works on Windows. It passed stdout to `select.select`, which only accepts sockets there.
