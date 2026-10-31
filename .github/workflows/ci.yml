@@ -80,7 +80,7 @@ jobs:
           path: htmlcov/
 
   test-docker:
-    name: Python ${{ matrix.python-version }}${{ matrix.platform != 'native' && format(' ({0})', matrix.platform) || '' }}
+    name: Python ${{ matrix.python-version }} (${{ matrix.platform }})
     # ARM runners are faster, and every image has an arm64 variant, except python:3.3-alpine.
     runs-on: ${{ matrix.python-version == '3.3' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
     env:
@@ -90,22 +90,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # uv refuses Python 3.6 and older and cannot download 3.7, so these run in Docker with pip.
+        python-version: ['3.3', '3.4', '3.5', '3.6', '3.7']
+        platform: [native]
         # GitHub has no big-endian runner, and uv cannot target s390x,
         # so the big-endian tests run on s390x under QEMU. There is no s390x python:3.3-alpine.
-        python-version: ['3.4', '3.5', '3.6', '3.7', '3.8', '3.9', '3.10', '3.11', '3.12', '3.13', '3.14', '3.15']
-        platform: [s390x]
-        # uv refuses Python 3.6 and older and cannot download 3.7, so these run in Docker with pip.
+        # Emulation is slow, so oldest and newest only.
         include:
-          - python-version: '3.3'
-            platform: native
           - python-version: '3.4'
-            platform: native
-          - python-version: '3.5'
-            platform: native
-          - python-version: '3.6'
-            platform: native
-          - python-version: '3.7'
-            platform: native
+            platform: s390x
+          - python-version: '3.15'
+            platform: s390x
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -136,7 +131,7 @@ jobs:
       - name: Write coverage to job summary
         run: |
           {
-            echo '### Coverage on Python ${{ matrix.python-version }}${{ matrix.platform != 'native' && format(' ({0})', matrix.platform) || '' }}'
+            echo '### Coverage on Python ${{ matrix.python-version }} (${{ matrix.platform }})'
             echo '```text'
             cat coverage.txt
             echo '```'
@@ -145,5 +140,5 @@ jobs:
       - name: Upload HTML coverage report
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: coverage-html-py${{ matrix.python-version }}${{ matrix.platform != 'native' && format('-{0}', matrix.platform) || '' }}
+          name: coverage-html-py${{ matrix.python-version }}-${{ matrix.platform }}
           path: htmlcov/
