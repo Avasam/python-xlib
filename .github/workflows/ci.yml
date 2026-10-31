@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [master, avasam-python-xlib]
+    branches: [avasam-python-xlib]
     tags: ['*']
   pull_request:
   workflow_dispatch:
