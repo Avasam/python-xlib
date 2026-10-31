@@ -10,6 +10,15 @@ Credit contributors other than the maintainer as `(thanks [@user][user])`, and a
 
 The `.pyi` stubs in `Xlib/` come from typeshed and are licensed under Apache-2.0 (see [LICENSE-typeshed](LICENSE-typeshed)), which requires modified files to carry a prominent notice of the change. The first change to a stub adds `# Modified from typeshed` as its first line. A stub that already has that line needs nothing more.
 
+stubtest compares the stubs with the implementation. What it reports that is not an error in the stubs goes in [stubtest_allowlist.txt](stubtest_allowlist.txt), with a comment saying why. `uv run utils/run_checkers.py` runs it with every other check.
+
+### Supported type checker versions
+
+Checking the oldest supported Python needs an old mypy (mypy 1.5 for Python 3.4), so the stubs must work with its bundled typeshed. A target that a newer mypy supports is assumed to be checked with that newer mypy. Dropping a Python version can drop the old mypy only it needed.
+
+- Names that the oldest typeshed only has in `typing` on newer Pythons (`Final`, `Literal`, `TypedDict`, `TypeAlias`, ...) come from `typing_extensions`.
+- Names that only a newer typeshed has go behind a `sys.version_info` gate at the oldest target that mypy supports, with a fallback below it. For example, [Xlib/_typing.pyi](Xlib/_typing.pyi) imports `ConvertibleToInt` from `_typeshed` on 3.7+ (mypy 1.7) and defines its own copy below.
+
 ## Releasing (maintainers)
 
 The version in `pyproject.toml` is the single source of truth. When a push to `Avasam/python-xlib` carries a version that has no tag yet, [release.yml](.github/workflows/release.yml) publishes to PyPI through trusted publishing, then creates the tag and the GitHub release on that commit. Tags are never created by hand, so the tag, PyPI and `Xlib.__version__` cannot disagree.

@@ -7,7 +7,12 @@
 set -eux
 
 # Fails on syntax newer than this Python, including in the examples and utilities the tests never import.
-python -m compileall -q Xlib test examples utils
+if python -c 'import sys; sys.exit(sys.version_info < (3, 11))'; then
+    python -m compileall -q Xlib test examples utils
+else
+    # Skips `utils/run_checkers.py`, a script that requires Python 3.11 and newer.
+    python -m compileall -q -x 'run_checkers\.py' Xlib test examples utils
+fi
 
 apk add --no-cache xvfb
 

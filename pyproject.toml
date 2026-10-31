@@ -67,7 +67,7 @@ classifiers = [
   "Topic :: Software Development :: Libraries",
   "Topic :: Software Development :: Testing",
   "Topic :: Software Development :: User Interfaces",
-  # "Typing :: Typed",
+  "Typing :: Typed",
 ]
 requires-python = ">=3.3"
 dependencies = [
@@ -96,6 +96,10 @@ test = [
 # uv only reads the lower bound of `requires-python`, so w/o the markers, it picks releases that exclude Python 3.3 and 3.4.
 type-checking = [
   "importlib-metadata; python_version >= '3.5'", # Only a dependency on Python 3.6 and 3.7
+  # PIL used by examples
+  "pillow>=10.3; python_version >= '3.10'", # First release with its own types
+  "types-pillow; python_version < '3.10'",
+  "packaging; python_version >= '3.8'", # Used by utils/run_checkers.py, which runs on Python 3.11+
 ]
 # Type checkers run on a recent Python, whatever version they check for.
 # W/o the markers, the lock picks ancient releases for the Pythons they don't install on.

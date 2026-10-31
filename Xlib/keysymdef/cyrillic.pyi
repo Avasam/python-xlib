@@ -1,4 +1,5 @@
-from typing import Final
+# Modified from typeshed
+from typing_extensions import Final
 
 XK_Serbian_dje: Final = 0x6A1
 XK_Macedonia_gje: Final = 0x6A2

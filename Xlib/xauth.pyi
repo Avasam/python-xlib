@@ -1,5 +1,6 @@
+# Modified from typeshed
 from _typeshed import FileDescriptorOrPath
-from typing import Final
+from typing_extensions import Final
 
 from Xlib.X import (
     FamilyChaos as FamilyChaos,
@@ -10,6 +11,7 @@ from Xlib.X import (
 )
 
 FamilyLocal: Final = 256
+FamilyWild: Final = 65535
 
 class Xauthority:
     entries: list[tuple[bytes, bytes, bytes, bytes, bytes]]

@@ -1,4 +1,5 @@
-from typing import Final
+# Modified from typeshed
+from typing_extensions import Final
 
 NoValue: Final = 0x0000
 XValue: Final = 0x0001

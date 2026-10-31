@@ -24,12 +24,12 @@ RESOURCE_DEF = (('CARD8', 'reqType'),
                 ('CARD16', 'length'),
                 ('CARD32', 'id'))
 
-request_defs = {}
-mini_request_defs = {}
-resource_request_defs = {}
-reply_defs = {}
-struct_defs = {}
-event_defs = {}
+request_defs = {}  # type: dict
+mini_request_defs = {}  # type: dict
+resource_request_defs = {}  # type: dict
+reply_defs = {}  # type: dict
+struct_defs = {}  # type: dict
+event_defs = {}  # type: dict
 
 def read_defs():
     for line in sys.stdin.readlines():

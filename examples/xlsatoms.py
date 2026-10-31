@@ -85,9 +85,6 @@ if rangeVals[1] != "":
 else:
     high = sys.maxsize
 
-if options.match_re is not None:
-    re_obj = re.compile(options.match_re)
-else:
-    re_obj = None
+re_obj = re.compile(options.match_re) if options.match_re is not None else None
 
 list_atoms(d,re_obj,low,high)

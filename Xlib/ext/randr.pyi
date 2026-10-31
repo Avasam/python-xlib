@@ -1,5 +1,6 @@
+# Modified from typeshed
 from collections.abc import Sequence
-from typing import Final, TypeAlias
+from typing_extensions import Final, TypeAlias
 
 from Xlib.display import Display
 from Xlib.protocol import request, rq

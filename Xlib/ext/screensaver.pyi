@@ -1,4 +1,5 @@
-from typing import Final
+# Modified from typeshed
+from typing_extensions import Final
 
 from Xlib._typing import ErrorHandler
 from Xlib.display import Display

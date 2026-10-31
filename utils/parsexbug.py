@@ -13,7 +13,7 @@ from Xlib.protocol import display, request, rq, event
 from Xlib import error
 
 # We don't want any fancy dictwrapper, just plain mappings
-rq.DictWrapper = lambda x: x
+rq.DictWrapper = lambda x: x  # type: ignore[misc, assignment, return-value] # Monkeypatching the class
 
 class BugFile(object):
     def __init__(self, file):

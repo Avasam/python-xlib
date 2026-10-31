@@ -1,4 +1,5 @@
-from typing import Final
+# Modified from typeshed
+from typing_extensions import Final
 
 XK_Hstroke: Final = 0x2A1
 XK_Hcircumflex: Final = 0x2A6

@@ -1,4 +1,5 @@
-from typing import Final
+# Modified from typeshed
+from typing_extensions import Final
 
 NONE: Final = 0
 ParentRelative: Final = 1

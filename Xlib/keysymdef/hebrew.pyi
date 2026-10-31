@@ -1,4 +1,5 @@
-from typing import Final
+# Modified from typeshed
+from typing_extensions import Final
 
 XK_hebrew_doublelowline: Final = 0xCDF
 XK_hebrew_aleph: Final = 0xCE0

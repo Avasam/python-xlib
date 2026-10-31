@@ -1,4 +1,5 @@
-from typing import Final
+# Modified from typeshed
+from typing_extensions import Final
 
 XK_leftcaret: Final = 0xBA3
 XK_rightcaret: Final = 0xBA6

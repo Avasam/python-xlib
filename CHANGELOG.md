@@ -13,6 +13,14 @@ Breaking Changes
   - `Xlib.protocol.display`: `PY3`, `byte2int`, `indexbytes`
   - `Xlib.protocol.rq`: `PY3`, `binary_type`, `byte2int`, `indexbytes`, `iterbytes`
 
+Typing
+------
+
+- The package ships type stubs and a `py.typed` marker (PEP 561). The stubs come from typeshed's `types-python-xlib`, imported with their history (thanks [@Avasam][Avasam], [@AlexWaygood][AlexWaygood], [@srittau][srittau], [@brianschubert][brianschubert], [@hauntsaninja][hauntsaninja], [@jelle-openai][jelle-openai] and [@MestreLion][MestreLion]), and are licensed under Apache-2.0.
+- Uninstall `types-python-xlib`: type checkers prefer stub packages over the stubs a package ships, so it would shadow them.
+- Compared to `types-python-xlib`, `rq.List` accepts `rq.Str` or any parse-only type with a `parse_binary` method as its type, and `rq.Object` accepts a tuple, dict or `DictWrapper` as its default.
+- Compared to `types-python-xlib`, `rq.List` and `rq.FixedList` accept a `ValueField` instance as their type, `rq.FixedList` accepts every type `rq.List` does, and value fields accept `None` as their name. `rq.Field.name` is `str | None` to match, `rq.Object.default` has the type its default parameter accepts, and `rq.Str.pack_value` accepts bytes. `rq.Struct.fields` is a tuple of any length instead of a single field.
+
 Performance
 -----------
 
@@ -816,22 +824,28 @@ The ChangeLog hadn't been maintained since 2002, but some of the more significan
 [a-detiste]: https://github.com/a-detiste
 [acrisci]: https://github.com/acrisci
 [alebastr]: https://github.com/alebastr
+[AlexWaygood]: https://github.com/AlexWaygood
 [allfro]: https://github.com/allfro
 [Avasam]: https://github.com/Avasam
 [barlowa124]: https://github.com/barlowa124
+[brianschubert]: https://github.com/brianschubert
 [CristiFati]: https://github.com/CristiFati
 [dd4e]: https://github.com/dd4e
 [Gerardwx]: https://github.com/Gerardwx
+[hauntsaninja]: https://github.com/hauntsaninja
 [i2y]: https://github.com/i2y
 [jakogut]: https://github.com/jakogut
+[jelle-openai]: https://github.com/jelle-openai
 [jimmy-loyola]: https://github.com/jimmy-loyola
 [jklong]: https://github.com/jklong
 [leinardi]: https://github.com/leinardi
 [Majiir]: https://github.com/Majiir
 [mattalexx]: https://github.com/mattalexx
+[MestreLion]: https://github.com/MestreLion
 [mgarg1]: https://github.com/mgarg1
 [mtelka]: https://github.com/mtelka
 [Sporif]: https://github.com/Sporif
+[srittau]: https://github.com/srittau
 [t-wissmann]: https://github.com/t-wissmann
 [thiagokokada]: https://github.com/thiagokokada
 [yaxollum]: https://github.com/yaxollum

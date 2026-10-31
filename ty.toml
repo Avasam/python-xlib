@@ -1,22 +1,53 @@
 # https://docs.astral.sh/ty/reference/configuration/
 [environment]
 # Oldest Python ty can check for. For editors, since uv can't make venvs that old.
-python-version = "3.7"
+# TODO: Lower to 3.7, ty's own floor, once ty can parse stubs with syntax newer than the target,
+# like `/` for positional-only parameters. https://github.com/astral-sh/ruff/issues/21677
+python-version = "3.8"
 
 [src]
-# Only the public API
+# Only the public API. Massively reduces false-positives as an early adopter of ty
+# No analyzeUnannotatedFunctions or check_untyped_defs equivalent
 include = ["Xlib"]
+
+###
+# Even typeshed disables these for stubs
+###
+
+[[overrides]]
+include = ["**/*.pyi"]
+[overrides.rules]
+# Incompatible overrides and deprecations are inherited from the implementation
+# and are not actionable in typeshed. [...]
+# TODO: Some may be actionable for us though
+deprecated = "ignore"
+invalid-attribute-override = "ignore"
+invalid-method-override = "ignore"
+invalid-mutable-override = "ignore"
+invalid-property-type-override = "ignore"
+override-of-final-method = "ignore"
+# Some `__init__` self annotations retain class-scoped type variables for mypy
+# compatibility (https://github.com/python/typeshed/pull/11780). Disable ty's
+# check; Pyright checks the stubs it covers, with targeted ignores where needed.
+invalid-init-type-variable = "ignore"
+
+###
+# False positives in the implementation
+###
+
+[[overrides]]
+include = ["**/*.py"]
+[overrides.rules]
+# A class from an implementation and the same class from its stub are different types to ty,
+# so passing one where callers resolved the other fails. https://github.com/astral-sh/ty/issues/1306
+invalid-argument-type = "ignore"
+# Methods can't override an attribute annotated with a `Callable`, like the `rq.Field` hooks.
+# https://github.com/astral-sh/ty/issues/4823
+invalid-mutable-override = "ignore"
 
 ###
 # TODO: Rules that don't pass yet
 ###
-
-[[overrides]]
-include = [
-  "Xlib/protocol/display.py",
-  "Xlib/protocol/request.py",
-]
-rules = { invalid-argument-type = "ignore" }
 
 [[overrides]]
 include = [
@@ -40,18 +71,16 @@ rules = { not-iterable = "ignore" }
 
 [[overrides]]
 include = [
+  "Xlib/display.py",
   "Xlib/protocol/display.py",
-  "Xlib/protocol/request.py",
 ]
 rules = { not-subscriptable = "ignore" }
 
 [[overrides]]
 include = [
   "Xlib/__init__.py",
-  "Xlib/ext/nvcontrol.py",
-  "Xlib/ext/record.py",
+  "Xlib/display.py",
   "Xlib/protocol/display.py",
-  "Xlib/protocol/request.py",
   "Xlib/protocol/rq.py",
   "Xlib/xobject/drawable.py",
 ]

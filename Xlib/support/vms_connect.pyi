@@ -1,8 +1,9 @@
+# Modified from typeshed
 from _socket import _Address
 from _typeshed import Unused
 from re import Pattern
 from socket import socket
-from typing import Final
+from typing_extensions import Final
 
 display_re: Final[Pattern[str]]
 

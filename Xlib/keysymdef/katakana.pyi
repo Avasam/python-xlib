@@ -1,4 +1,5 @@
-from typing import Final
+# Modified from typeshed
+from typing_extensions import Final
 
 XK_overline: Final = 0x47E
 XK_kana_fullstop: Final = 0x4A1

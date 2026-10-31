@@ -1,13 +1,25 @@
 // https://github.com/microsoft/pyright/blob/main/docs/configuration.md#sample-config-file
 {
-  "typeCheckingMode": "basic",
-  "analyzeUnannotatedFunctions": false,
-  // Oldest Python pyright can check for, typeshed only has `typing` from Python 3.5. For editors, since uv can't make venvs that old.
-  "pythonVersion": "3.5",
-
+  // Overlapping overloads are often necessary in a stub, meaning pyright's check
+  // (which is stricter than mypy's; see python/mypy#10143 and python/mypy#10157)
+  // would cause many false positives and catch few bugs.
+  "reportOverlappingOverload": "none",
   /**
    * Specific to this project
    */
-  // Only the public API
-  "include": ["Xlib"],
+  // Most basic type-checking possible to reduce initial adoption failures
+  "analyzeUnannotatedFunctions": false,
+  // Oldest Python pyright can check for, typeshed only has `typing` from Python 3.5. For editors, since uv can't make venvs that old.
+  "pythonVersion": "3.5",
+  // TODO: Typeshed disables these even in their strict settings
+  // But as the implementation owner, we can actually address these
+  "reportIncompatibleMethodOverride": "none",
+  "reportIncompatibleVariableOverride": "none",
+  "executionEnvironments": [
+    // Only runs through `uv run`, on the Python its inline metadata requires
+    {
+      "root": "utils/run_checkers.py",
+      "pythonVersion": "3.11"
+    },
+  ],
 }

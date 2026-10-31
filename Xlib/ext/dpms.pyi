@@ -1,5 +1,6 @@
+# Modified from typeshed
 from _typeshed import Unused
-from typing import Final, Literal
+from typing_extensions import Final, Literal
 
 from Xlib.display import Display
 from Xlib.protocol import rq

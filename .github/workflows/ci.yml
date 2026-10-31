@@ -84,7 +84,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.7', '3.15']
+        # TODO: Lower to 3.7, ty's own floor, once ty can parse stubs with syntax newer than the target,
+        # like `/` for positional-only parameters. https://github.com/astral-sh/ruff/issues/21677
+        python-version: ['3.8', '3.15']
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -92,6 +94,29 @@ jobs:
 
       - uses: astral-sh/setup-uv@v10.3.3
       - run: uv run --locked --only-group=ty ty check --python-version=${{ matrix.python-version }}
+
+  # Compares the stubs with the runtime of the Python it runs on, which can differ per OS.
+  # The oldest Python is the oldest the newest mypy installs on, see pyproject.toml.
+  stubtest:
+    name: stubtest (Python ${{ matrix.python-version }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    env:
+      # mypy only colors its output when it finds the terminal's capabilities
+      TERM: xterm-256color
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04-arm, macos-15, windows-2025]
+        python-version: ['3.10', '3.15']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: uv run --locked --only-group=mypy python -m mypy.stubtest Xlib --mypy-config-file=mypy.ini --allowlist=stubtest_allowlist.txt --strict-type-check-only
 
   test:
     name: Python ${{ matrix.python-version }} (${{ matrix.os }})
@@ -198,26 +223,8 @@ jobs:
       - name: Run tests with pip
         if: ${{ steps.python.outputs.legacy == 'true' }}
         run: |
-          # Fails on syntax newer than this Python, including in the examples and utilities the tests never import.
-          python -m compileall -q Xlib test examples utils
-          # Python 3.4.4 on Windows can segfault while pip downloads, so retry on a segfault (exit code 139) only.
-          pip_install() {
-            for attempt in 1 2 3; do
-              python -m pip install --disable-pip-version-check "$@" && return
-              status=$?
-              [ "$status" -eq 139 ] || return "$status"
-              echo "::warning::pip segfaulted on attempt $attempt"
-            done
-            return "$status"
-          }
-          # The last pip that supports every legacy Python. Python 3.4.4 bundles pip 7.1.2,
-          # which predates `--require-hashes` and ignores `Requires-Python`.
-          pip_install pip==19.1.1
           uv export --locked --no-emit-project --no-default-groups --group test --output-file "$RUNNER_TEMP/requirements.txt"
-          pip_install --require-hashes -r "$RUNNER_TEMP/requirements.txt"
-          python -m coverage run -m unittest -v
-          python -m coverage report > coverage.txt
-          python -m coverage html
+          sh .github/scripts/legacy-tests.sh "$RUNNER_TEMP/requirements.txt"
 
       # Plain text report, to match `test-docker`, where coverage 6 and older lack `--format=markdown`.
       - name: Write coverage to job summary

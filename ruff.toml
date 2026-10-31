@@ -5,6 +5,15 @@ preview = false
 # and would otherwise default to Python 3.10+. See: https://github.com/astral-sh/ruff/issues/8832
 target-version = "py37"
 
+[per-file-target-version]
+# Stubs never run. Type checkers parse them with their own parser, or with the grammar of the
+# Python running mypy, regardless of `target-version`. See: https://github.com/astral-sh/ruff/issues/21677
+# Python 3.9 runs the oldest mypy in CI, the last one that checks for Python 3.4 (see `pyproject.toml`).
+# So 3.9 is the newest syntax stubs can use, not the oldest Python they are checked for.
+"*.pyi" = "py39"
+# The checker script only runs through `uv run`, on the Python its inline metadata requires.
+"utils/run_checkers.py" = "py311"
+
 [lint]
 ignore = [
   ###
@@ -102,8 +111,17 @@ ignore = [
 "Xlib/**" = [
   "N999", # invalid-module-name: renaming would break the public API
 ]
+"*.pyi" = [
+  # `per-file-target-version` makes Ruff assume Python 3.9, but stubs are checked down to Python 3.4.
+  # The typeshed bundled with the oldest mypy gates `Final`, `Literal`, `SupportsIndex`, `TypedDict`
+  # (Python 3.8+) and `TypeAlias` (Python 3.10+) in `typing`.
+  "UP035", # deprecated-import
+]
 "test/**" = [
   "S", # Tests and generator only run trusted, local commands
+]
+"utils/run_checkers.py" = [
+  "S603", # subprocess-without-shell-equals-true: only runs fixed, local commands
 ]
 
 [lint.flake8-self]
