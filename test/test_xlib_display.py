@@ -54,12 +54,12 @@ class TestXlibDisplay(unittest.TestCase):
         self.assertTrue(isinstance(self.display.fileno(), int))
 
     def test_has_no_invalid_extension(self):
-        self.assertTrue(~self.display.has_extension(self.dummy_str))
+        self.assertFalse(self.display.has_extension(self.dummy_str))
 
     def test_has_valid_extension(self):
         extensions = self.display.list_extensions()
         if extensions:
-            self.assertTrue(~self.display.has_extension(extensions[0]))
+            self.assertTrue(self.display.has_extension(extensions[0]))
 
     def test_can_create_resource_object(self):
         self.assertTrue(
