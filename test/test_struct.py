@@ -5,9 +5,11 @@ import struct
 import types
 import re
 
+from mock import Mock
 from six import binary_type, iterbytes
 
 from Xlib.protocol import rq
+from Xlib.support import lock
 from . import DummyDisplay, TestCase
 
 
@@ -241,3 +243,18 @@ class TestPropertyData(TestCase):
     def test_invalid_format(self):
         with self.assertRaises(rq.BadDataError):
             rq.PropertyData('value').parse_binary_value(b'rest', dummy_display, 1, 24)
+
+
+class TestReplyRequest(TestCase):
+
+    def test_reply_already_received_as_empty_list(self):
+        """ ListFontsWithInfo stores [] when no font matches, which is still a reply. """
+        req = rq.ReplyRequest.__new__(rq.ReplyRequest)
+        req._display = Mock()
+        req._display.send_and_recv.side_effect = AssertionError('waited for a reply that already arrived')
+        req._serial = 1
+        req._data = []
+        req._error = None
+        req._response_lock = lock.allocate_lock()
+        req.reply()
+        self.assertIsNone(req._display)

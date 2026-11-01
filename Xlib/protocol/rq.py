@@ -1399,7 +1399,7 @@ class ReplyRequest(GetAttrData):
         display = self._display
 
         self._response_lock.acquire()
-        while display is not None and not self._data and self._error is None:
+        while display is not None and self._data is None and self._error is None:
             display.send_recv_lock.acquire()
             self._response_lock.release()
 
