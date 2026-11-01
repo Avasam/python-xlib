@@ -49,6 +49,7 @@ Bug Fixes
 - `parse_binary_value` always returns its remaining data as `bytes`.
 - `import Xlib` imports the submodules listed in `Xlib.__all__`, and `Xlib.ext.__all__` is a list instead of a single-use iterator.
 - On Windows, `DISPLAY=:0` connects over TCP to `localhost` instead of raising `AttributeError`, and `unix/:0` raises `DisplayConnectionError`. Elsewhere, the TCP fallback for `:0` connects to `localhost` instead of the empty address.
+- Warnings about an empty or unparsable Xauthority file are logged through the `Xlib.xauth` logger instead of printed to stdout, which broke programs whose output is parsed. Without logging configured, they still show on stderr ([python-xlib/python-xlib#285](https://github.com/python-xlib/python-xlib/pull/285)).
 - When neither `XAUTHORITY` nor `HOME` is set, as is usual on Windows, `.Xauthority` is read from `USERPROFILE` like libXau does, instead of connecting without a cookie.
 - On macOS, a `DISPLAY` that names XQuartz's socket connects to that socket. Its protocol was parsed as `None`, so `/tmp/.X11-unix/X<n>` was tried instead.
 - On macOS, the launchd socket path XQuartz sets in `DISPLAY` (`/private/tmp/com.apple.launchd.<id>/org.xquartz:0`) no longer raises `DisplayNameError`.

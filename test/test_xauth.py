@@ -1,3 +1,4 @@
+import logging
 import os
 import tempfile
 import unittest
@@ -50,6 +51,36 @@ class TestGetBestAuth(unittest.TestCase):
             self.get_best_auth([
                 (xauth.FamilyLocal, b'other', b'0', COOKIE, b'wrong host'),
             ], xauth.FamilyLocal, b'host', 0)
+
+
+class TestWarnings(unittest.TestCase):
+
+    def read(self, raw):
+        fd, filename = tempfile.mkstemp(prefix='xlib-test-', suffix='.Xauthority')
+        self.addCleanup(os.unlink, filename)
+        with os.fdopen(fd, 'wb') as f:
+            f.write(raw)
+        # Patched rather than `assertLogs`, which needs Python 3.4
+        with patch.object(logging.getLogger('Xlib.xauth'), 'warning') as warning:
+            auth = xauth.Xauthority(filename)
+        return auth, filename, warning
+
+    def test_valid(self):
+        auth, _, warning = self.read(xauth_entry(xauth.FamilyLocal, b'host', b'0', COOKIE, b'cookie'))
+        self.assertEqual(len(auth), 1)
+        warning.assert_not_called()
+
+    def test_truncated(self):
+        entry = xauth_entry(xauth.FamilyLocal, b'host', b'0', COOKIE, b'cookie')
+        auth, filename, warning = self.read(entry + b'\x01')
+        self.assertEqual(len(auth), 1)
+        warning.assert_called_once_with(
+            'Failed to parse part of Xauthority file %s, ignoring the rest of it', filename)
+
+    def test_empty(self):
+        auth, filename, warning = self.read(b'')
+        self.assertEqual(len(auth), 0)
+        warning.assert_called_once_with('No Xauthority entries found in %s', filename)
 
 
 class TestDefaultFilename(unittest.TestCase):

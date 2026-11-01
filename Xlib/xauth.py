@@ -19,6 +19,7 @@
 #    Suite 330,
 #    Boston, MA 02111-1307 USA
 
+import logging
 import os
 import struct
 
@@ -32,6 +33,8 @@ FamilyInternetV6 = X.FamilyInternetV6
 FamilyLocal = 256
 # Matches any family and address, as written by Mutter's XWayland for example
 FamilyWild = 65535
+
+_logger = logging.getLogger(__name__)
 
 class Xauthority(object):
     def __init__(self, filename = None):
@@ -92,11 +95,11 @@ class Xauthority(object):
 
                 self.entries.append((family, addr, num, name, data))
         except struct.error:
-            print("Xlib.xauth: warning, failed to parse part of xauthority file {0}, aborting all further parsing".format(filename))
+            _logger.warning('Failed to parse part of Xauthority file %s, ignoring the rest of it', filename)
 
         if len(self.entries) == 0:
-            print("Xlib.xauth: warning, no xauthority details available")
-            # raise an error?  this should get partially caught by the XNoAuthError in get_best_auth..
+            _logger.warning('No Xauthority entries found in %s', filename)
+            # This should get partially caught by the XNoAuthError in get_best_auth..
 
     def __len__(self):
         return len(self.entries)
