@@ -1,11 +1,15 @@
 import os
+import select
+import socket
 import unittest
+from unittest import mock
 
 import Xlib.XK
 import Xlib.display
 import Xlib.error
 import Xlib.protocol.display
 import Xlib.protocol.event
+import Xlib.protocol.request
 import Xlib.protocol.rq
 import Xlib.xobject.fontable
 import Xlib.X
@@ -193,6 +197,48 @@ class TestXlibDisplayClose(unittest.TestCase):
     def test_can_close_display_and_check_for_error(self):
         self.display.close()
         self.assertRaises(Xlib.error.ConnectionClosedError, self.display.flush)
+
+    def test_close_internal_returns_stored_error(self):
+        err = self.display.display.close_internal('client')
+        self.assertIs(err, self.display.display.socket_error)
+        self.assertEqual(self.display.display.request_queue, [])
+        self.assertEqual(self.display.display.data_recv, b'')
+        self.assertRaises(Xlib.error.ConnectionClosedError, self.display.get_input_focus)
+
+    def _replace_socket(self, **methods):
+        """Swap the display socket for one whose send or recv misbehaves, keeping its fileno for select."""
+        real_socket = self.display.display.socket
+        fake_socket = mock.Mock(fileno=real_socket.fileno, close=real_socket.close,
+                                send=real_socket.send, recv=real_socket.recv)
+        fake_socket.configure_mock(**methods)
+        self.display.display.socket = fake_socket
+
+    def _wait_for_reply(self):
+        """Leave a reply unread on the socket, so select reports it readable."""
+        Xlib.protocol.request.GetInputFocus(display=self.display.display, defer=True)
+        self.display.flush()
+        select.select([self.display.display.socket], [], [], 5)
+
+    def test_server_closes_connection(self):
+        self._wait_for_reply()
+        self._replace_socket(recv=mock.Mock(return_value=b''))
+        with self.assertRaises(Xlib.error.ConnectionClosedError) as cm:
+            self.display.pending_events()
+        self.assertEqual(str(cm.exception), "Display connection closed by server")
+        self.assertIs(cm.exception, self.display.display.socket_error)
+
+    def test_recv_error(self):
+        self._wait_for_reply()
+        self._replace_socket(recv=mock.Mock(side_effect=socket.error('recv failed')))
+        with self.assertRaises(Xlib.error.ConnectionClosedError) as cm:
+            self.display.pending_events()
+        self.assertEqual(str(cm.exception), "Display connection closed by server: recv failed")
+
+    def test_send_error(self):
+        self._replace_socket(send=mock.Mock(side_effect=socket.error('send failed')))
+        with self.assertRaises(Xlib.error.ConnectionClosedError) as cm:
+            self.display.get_input_focus()
+        self.assertEqual(str(cm.exception), "Display connection closed by server: send failed")
 
 
 if __name__ == '__main__':

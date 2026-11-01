@@ -356,20 +356,24 @@ class Display(object):
 
     def close_internal(self, whom):
         # Clear out data structures
-        self.request_queue = None
-        self.sent_requests = None
-        self.event_queue = None
-        self.data_send = None
-        self.data_recv = None
-        self._data_recv_pending = None
+        self.request_queue = []
+        self.sent_requests = []
+        self.event_queue = []
+        self.data_send = b''
+        self.data_recv = b''
+        self._data_recv_pending = []
+        self._data_recv_pending_len = 0
 
         # Close the connection
         self.socket.close()
 
         # Set a connection closed indicator
+        err = error.ConnectionClosedError(whom)
         self.socket_error_lock.acquire()
-        self.socket_error = error.ConnectionClosedError(whom)
+        self.socket_error = err
         self.socket_error_lock.release()
+
+        return err
 
 
     def send_and_recv(self, flush = False, event = False, request = None, recv = False):
@@ -570,8 +574,7 @@ class Display(object):
                 try:
                     i = self.socket.send(self.data_send)
                 except socket.error as err:
-                    self.close_internal('server: %s' % err)
-                    raise self.socket_error
+                    raise self.close_internal('server: %s' % err)
 
                 self.data_send = self.data_send[i:]
                 self.data_sent_bytes = self.data_sent_bytes + i
@@ -589,13 +592,11 @@ class Display(object):
                         count = max(self.recv_buffer_size, count)
                         bytes_recv = self.socket.recv(count)
                     except socket.error as err:
-                        self.close_internal('server: %s' % err)
-                        raise self.socket_error
+                        raise self.close_internal('server: %s' % err)
 
                     if not bytes_recv:
                         # Clear up, set a connection closed indicator and raise it
-                        self.close_internal('server')
-                        raise self.socket_error
+                        raise self.close_internal('server')
 
                     # Concatenating each chunk as it arrives is quadratic for
                     # large replies (e.g. GetImage), so hold the chunks until
@@ -691,6 +692,7 @@ class Display(object):
 
         # Parse ordinary server response
         gotreq = False
+        rtype = None
         while True:
             if self.data_recv:
                 # Check the first byte to find out what kind of response it is
@@ -704,7 +706,7 @@ class Display(object):
                 if rtype == 1:
                     gotreq = self.parse_request_response(request) or gotreq
                     continue
-                elif rtype & 0x7f == ge.GenericEventCode:
+                elif rtype and (rtype & 0x7f == ge.GenericEventCode):
                     self.parse_event_response(rtype)
                     continue
                 else:
@@ -712,7 +714,7 @@ class Display(object):
 
             # Every response is at least 32 bytes long, so don't bother
             # until we have received that much
-            if len(self.data_recv) < 32:
+            if len(self.data_recv) < 32 or rtype is None:
                 return gotreq
 
             # Error response
@@ -720,7 +722,7 @@ class Display(object):
                 gotreq = self.parse_error_response(request) or gotreq
 
             # Request response or generic event.
-            elif rtype == 1 or rtype & 0x7f == ge.GenericEventCode:
+            elif rtype == 1 or (rtype & 0x7f == ge.GenericEventCode):
                 # Set reply length, and loop around to see if
                 # we have got the full response
                 rlen = int(struct.unpack('=L', self.data_recv[4:8])[0])
@@ -815,8 +817,9 @@ class Display(object):
     def parse_event_response(self, etype):
         # Skip bit 8, that is set if this event came from an SendEvent
         etype = etype & 0x7f
+        is_generic_event_code = etype == ge.GenericEventCode
 
-        if etype == ge.GenericEventCode:
+        if is_generic_event_code:
             length = self.recv_packet_len
         else:
             length = 32
@@ -830,7 +833,7 @@ class Display(object):
 
         e = estruct(display = self, binarydata = self.data_recv[:length])
 
-        if etype == ge.GenericEventCode:
+        if is_generic_event_code:
             self.recv_packet_len = 0
 
         self.data_recv = bytesview(self.data_recv, length)

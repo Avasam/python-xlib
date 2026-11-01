@@ -20,6 +20,7 @@ Typing
 - Uninstall `types-python-xlib`: type checkers prefer stub packages over the stubs a package ships, so it would shadow them.
 - Compared to `types-python-xlib`, `rq.List` accepts `rq.Str` or any parse-only type with a `parse_binary` method as its type, and `rq.Object` accepts a tuple, dict or `DictWrapper` as its default.
 - Compared to `types-python-xlib`, `rq.List` and `rq.FixedList` accept a `ValueField` instance as their type, `rq.FixedList` accepts every type `rq.List` does, and value fields accept `None` as their name. `rq.Field.name` is `str | None` to match, `rq.Object.default` has the type its default parameter accepts, and `rq.Str.pack_value` accepts bytes. `rq.Struct.fields` is a tuple of any length instead of a single field.
+- Compared to `types-python-xlib`, `rq.Request._request` and `rq.ReplyRequest._request` are declared as `rq.Struct`, as is `rq.Event._fields`, so extensions defining their own requests and events are checked against it. `xinput.ClassInfoClass.check_value` is declared, and `Xlib.protocol.display.Display.close_internal` returns the `ConnectionClosedError` it stores.
 
 Performance
 -----------
@@ -53,6 +54,9 @@ Bug Fixes
 - On macOS, the launchd socket path XQuartz sets in `DISPLAY` (`/private/tmp/com.apple.launchd.<id>/org.xquartz:0`) no longer raises `DisplayNameError`.
 - On macOS, connecting through XQuartz's socket sends the Xauthority cookie. The hostname was looked up as `str` against `bytes` entries, so no cookie matched.
 - `rq.DictWrapper` and `rq.Event` no longer define `<` and `>`, which compared the underlying `dict` and so always raised `TypeError`. Comparing them still raises `TypeError`, but now names their own class, and a reflected comparison on the other operand gets the wrapper instead of its `dict` ([python-xlib/python-xlib#253](https://github.com/python-xlib/python-xlib/issues/253)).
+- Resource fields (`rq.Window`, `rq.Pixmap`, ...) and `rq.ResourceObj` return the raw id when parsed without a display, instead of raising `AttributeError` ([python-xlib/python-xlib#248](https://github.com/python-xlib/python-xlib/pull/248)).
+- `rq.Struct.to_binary` on a struct with a parse-only field raises a `RuntimeError` that names those fields, instead of an `AttributeError` about `pack_value` ([python-xlib/python-xlib#248](https://github.com/python-xlib/python-xlib/pull/248)).
+- `rq.PropertyData` parses format 0 as `None` even without a length, instead of raising `ZeroDivisionError`, and raises `BadDataError` for a format other than 0, 8, 16 or 32, instead of `UnboundLocalError` ([python-xlib/python-xlib#248](https://github.com/python-xlib/python-xlib/pull/248)).
 
 Extensions
 ----------

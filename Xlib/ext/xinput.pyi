@@ -162,6 +162,7 @@ TouchInfo: rq.Struct
 INFO_CLASSES: Final[dict[int, rq.Struct]]
 
 class ClassInfoClass:
+    check_value: None
     structcode: None
     def parse_binary(self, data: SliceableBuffer, display: display.Display | None) -> tuple[rq.DictWrapper, SliceableBuffer]: ...
 

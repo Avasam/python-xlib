@@ -376,7 +376,7 @@ INFO_CLASSES = {
 }
 
 class ClassInfoClass(object):
-
+    check_value = None
     structcode = None
 
     def parse_binary(self, data, display):

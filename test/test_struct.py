@@ -217,3 +217,48 @@ class TestStr(TestCase):
         value, remain = rq.Str.parse_binary(b'\x05fixed!', dummy_display)
         self.assertEqual(value, 'fixed')
         self.assertEqual(remain, b'!')
+
+
+class TestResourceParseValue(TestCase):
+    """ Resource fields return the raw id when there is no display to look up a class with. """
+
+    def test_resource_without_display(self):
+        self.assertEqual(rq.Window('w').parse_value(42, None), 42)
+
+    def test_resource_obj_without_display(self):
+        self.assertEqual(rq.ResourceObj('window').parse_value(42, None), 42)
+
+
+class ParseOnly(rq.ValueField):
+    """ A variable size field without pack_value, like xinput.ButtonState. """
+    structcode = None
+
+    def parse_binary_value(self, data, display, length, format):
+        return data, b''
+
+
+class TestStructWithParseOnlyField(TestCase):
+
+    def setUp(self):
+        self.struct = rq.Struct(rq.Card8('c8'), ParseOnly('po'))
+
+    def test_parse_binary(self):
+        values, remain = self.struct.parse_binary(pack('B', 0x42) + b'data', dummy_display)
+        self.assertEqual(values, rq.DictWrapper({'c8': 0x42, 'po': b'data'}))
+        self.assertBinaryEmpty(remain)
+
+    def test_to_binary_names_the_field(self):
+        with self.assertRaisesRegex(RuntimeError, r'po \(ParseOnly\)'):
+            self.struct.to_binary(c8=0x42, po=b'data')
+
+
+class TestPropertyData(TestCase):
+
+    def test_format_0_has_no_data(self):
+        field = rq.PropertyData('value')
+        for length in (0, None):
+            self.assertEqual(field.parse_binary_value(b'rest', dummy_display, length, 0), (None, b'rest'))
+
+    def test_invalid_format(self):
+        with self.assertRaises(rq.BadDataError):
+            rq.PropertyData('value').parse_binary_value(b'rest', dummy_display, 1, 24)

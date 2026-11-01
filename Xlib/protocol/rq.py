@@ -104,6 +104,7 @@ class Field(object):
     """
     name = None
     default = None
+    pack_value = None
 
     structcode = None
     structvalues = 0
@@ -291,8 +292,8 @@ class Resource(Card32):
         return getattr(value, self.cast_function, lambda: value)()
 
     def parse_value(self, value, display):
-        # if not display:
-        #    return value
+        if not display:
+            return value
         if value in self.codes:
             return value
 
@@ -638,15 +639,19 @@ class PropertyData(ValueField):
     structcode = None
 
     def parse_binary_value(self, data, display, length, format):
+        # Format 0 means the property does not exist, so there is no data
+        if format == 0:
+            return None, data
+
+        if format not in (8, 16, 32):
+            raise BadDataError('Invalid property data format {0}'.format(format))
+
         if length is None:
             length = len(data) // (format // 8)
         else:
             length = int(length)
 
-        if format == 0:
-            ret = None
-
-        elif format == 8:
+        if format == 8:
             ret = (8, data[:length])
             data = data[length + ((4 - length % 4) % 4):]
 
@@ -654,7 +659,7 @@ class PropertyData(ValueField):
             ret = (16, array(array_unsigned_codes[2], data[:2 * length]))
             data = data[2 * (length + length % 2):]
 
-        elif format == 32:
+        else:
             ret = (32, array(array_unsigned_codes[4], data[:4 * length]))
             data = data[4 * length:]
 
@@ -878,8 +883,8 @@ class ResourceObj(object):
         self.check_value = None
 
     def parse_value(self, value, display):
-        # if not display:
-        #     return value
+        if not display:
+            return value
         c = display.get_resource_class(self.class_name)
         if c:
             return c(display, value)
@@ -928,6 +933,9 @@ class Struct(object):
     object to make conversion as fast as possible.  They are
     generated the first time the methods are called.
     """
+    name = ""
+    check_value = None
+    keyword_args = False
 
     def __init__(self, *fields):
         self.fields = fields
@@ -959,6 +967,8 @@ class Struct(object):
                 self.var_fields.append(f)
 
         self.static_size = struct.calcsize(self.static_codes)
+        # Parse-only fields have no pack_value, so only to_binary refuses them
+        self._unpackable_fields = [f for f in self.var_fields if f.pack_value is None]
         if self.var_fields:
             self.structcode = None
             self.structvalues = 0
@@ -1004,6 +1014,11 @@ class Struct(object):
         var_vals = {}
         lengths = {}
         formats = {}
+
+        if self._unpackable_fields:
+            raise RuntimeError('No pack_value provided for {0}'.format(
+                ', '.join('{0} ({1})'.format(f.name, type(f).__name__)
+                          for f in self._unpackable_fields)))
 
         for f in self.var_fields:
             if f.keyword_args:

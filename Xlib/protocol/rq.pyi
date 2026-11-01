@@ -391,15 +391,18 @@ class DictWrapper(GetAttrData):
     def __setattr__(self, key: str, value: object) -> None: ...
 
 class Request:
+    _request: Struct
     def __init__(
         self, display: _BaseDisplay, onerror: ErrorHandler[object] | None = None, *args: object, **keys: object
     ) -> None: ...
 
 class ReplyRequest(GetAttrData):
+    _request: Struct
     def __init__(self, display: display.Display, defer: bool = False, *args: object, **keys: object) -> None: ...
     def reply(self) -> None: ...
 
 class Event(GetAttrData):
+    _fields: Struct
     def __init__(
         self, binarydata: SliceableBuffer | None = None, display: display.Display | None = None, **keys: object
     ) -> None: ...
