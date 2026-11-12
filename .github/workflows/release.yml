@@ -17,7 +17,7 @@ concurrency:
 jobs:
   check:
     name: Check for a new version
-    runs-on: ubuntu-24.04-arm
+    runs-on: &ubuntu-latest-arm ubuntu-24.04-arm
     permissions:
       contents: read
     outputs:
@@ -56,7 +56,7 @@ jobs:
     name: Build distributions
     needs: check
     if: needs.check.outputs.version != ''
-    runs-on: ubuntu-24.04-arm
+    runs-on: *ubuntu-latest-arm
     permissions:
       contents: read
     steps:
@@ -77,7 +77,7 @@ jobs:
   publish-pypi:
     name: Publish to PyPI
     needs: [check, build]
-    runs-on: ubuntu-24.04-arm
+    runs-on: *ubuntu-latest-arm
     environment:
       name: pypi
       url: https://pypi.org/project/avasam-python-xlib/${{ needs.check.outputs.version }}/
@@ -96,7 +96,7 @@ jobs:
   release:
     name: Publish GitHub release
     needs: [check, publish-pypi]
-    runs-on: ubuntu-24.04-arm
+    runs-on: *ubuntu-latest-arm
     permissions:
       contents: write
     steps:
