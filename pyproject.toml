@@ -11,7 +11,7 @@ source-include = ["test/*.py"]
 name = "avasam-python-xlib"
 # `Xlib.__version__` reads this from the installed metadata.
 # Changing it publishes a release, bump it with `utils/bump-version.sh`. See CONTRIBUTING.md.
-version = "0.33"
+version = "1.0"
 description = "Python X Library: a drop-in fork of python-xlib, the pure Python X11 client, with bug fixes, speedups and modern packaging"
 readme = "README.rst"
 license = "LGPL-2.1-or-later AND Apache-2.0"
