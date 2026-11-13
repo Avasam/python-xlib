@@ -34,6 +34,8 @@ It refuses to run when [`Unreleased`](CHANGELOG.md#unreleased) is empty, when th
 
 The `check` job refuses to release when [CHANGELOG.md](CHANGELOG.md) has no `Version X.Y.Z` section, or when [`Unreleased`](CHANGELOG.md#unreleased) still has entries. The GitHub release notes are copied from the `Version X.Y.Z` section.
 
+CI skips a push that only changes [CHANGELOG.md](CHANGELOG.md) and the `version` line of [pyproject.toml](pyproject.toml) and [uv.lock](uv.lock), as detected by [is-version-bump.sh](.github/scripts/is-version-bump.sh) on content and not on the commit message. The previous commit already passed CI, and the release commit has the same code.
+
 ### When something fails
 
 - **`check` fails**: nothing was published. Fix it in a new commit and push. The release runs again since the version is still untagged.

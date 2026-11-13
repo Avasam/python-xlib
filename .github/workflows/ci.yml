@@ -19,8 +19,36 @@ env:
   TY_OUTPUT_FORMAT: github
 
 jobs:
-  Ruff:
+  # Skips every other job for a push that only bumps the version,
+  # since the previous commit already passed. See CONTRIBUTING.md.
+  # Pull requests always run.
+  changes:
+    name: Check for a release commit
     runs-on: &ubuntu-latest-arm ubuntu-24.04-arm
+    outputs:
+      skip: ${{ steps.release.outputs.skip }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The previous commit of a push can be any number of commits back
+          fetch-depth: 0
+          persist-credentials: false
+
+      - id: release
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = push ] && sh .github/scripts/is-version-bump.sh "$BEFORE" "$GITHUB_SHA"; then
+            echo "Only the version and changelog changed since $BEFORE, skipping the checks."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  Ruff:
+    needs: changes
+    if: ${{ needs.changes.outputs.skip != 'true' }}
+    runs-on: *ubuntu-latest-arm
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -32,6 +60,8 @@ jobs:
   # Type checkers run on a recent Python, and check for the oldest Python they support and the newest.
   mypy:
     name: mypy (Python ${{ matrix.python-version }})
+    needs: changes
+    if: ${{ needs.changes.outputs.skip != 'true' }}
     runs-on: *ubuntu-latest-arm
     env:
       # mypy only colors its output when it finds the terminal's capabilities
@@ -56,6 +86,8 @@ jobs:
 
   pyright:
     name: pyright (Python ${{ matrix.python-version }})
+    needs: changes
+    if: ${{ needs.changes.outputs.skip != 'true' }}
     runs-on: *ubuntu-latest-arm
     strategy:
       fail-fast: false
@@ -80,6 +112,8 @@ jobs:
 
   ty:
     name: ty (Python ${{ matrix.python-version }})
+    needs: changes
+    if: ${{ needs.changes.outputs.skip != 'true' }}
     runs-on: *ubuntu-latest-arm
     strategy:
       fail-fast: false
@@ -99,6 +133,8 @@ jobs:
   # The oldest Python is the oldest the newest mypy installs on, see pyproject.toml.
   stubtest:
     name: stubtest (Python ${{ matrix.python-version }}, ${{ matrix.os }})
+    needs: changes
+    if: ${{ needs.changes.outputs.skip != 'true' }}
     runs-on: ${{ matrix.os }}
     env:
       # mypy only colors its output when it finds the terminal's capabilities
@@ -126,6 +162,8 @@ jobs:
 
   test:
     name: Python ${{ matrix.python-version }} (${{ matrix.os }})
+    needs: changes
+    if: ${{ needs.changes.outputs.skip != 'true' }}
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -252,6 +290,8 @@ jobs:
   test-docker:
     name: Python ${{ matrix.python-version }} (${{ matrix.platform }})
     # ARM runners are faster, and every image has an arm64 variant, except python:3.3-alpine.
+    needs: changes
+    if: ${{ needs.changes.outputs.skip != 'true' }}
     runs-on: ${{ matrix.python-version == '3.3' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
     env:
       # https://docs.python.org/3/library/devmode.html#effects-of-the-python-development-mode
