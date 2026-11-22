@@ -191,8 +191,8 @@ ordered by importance.
 .. _X410:         https://x410.dev/
 
 .. |Build Status| image::
-   https://github.com/Avasam/python-xlib/actions/workflows/ci.yml/badge.svg
-   :target: https://github.com/Avasam/python-xlib/actions/workflows/ci.yml
+   https://github.com/Avasam/python-xlib/actions/workflows/ci.yml/badge.svg?branch=avasam-python-xlib&event=push
+   :target: https://github.com/Avasam/python-xlib/actions/workflows/ci.yml?query=branch%3Aavasam-python-xlib+event%3Apush
 .. |Ruff| image::
    https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
    :target: https://github.com/astral-sh/ruff
