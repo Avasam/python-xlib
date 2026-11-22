@@ -3,6 +3,11 @@ NEWS for Python X Library
 Unreleased
 ==========
 
+---
+
+Version 1.0
+===========
+
 Breaking Changes
 ----------------
 

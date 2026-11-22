@@ -83,7 +83,7 @@ wheels = [
 
 [[package]]
 name = "avasam-python-xlib"
-version = "0.33"
+version = "1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "importlib-metadata", version = "4.8.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.6.*'" },
