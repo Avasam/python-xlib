@@ -8,6 +8,11 @@ Extensions
 
 - RandR: `BadRROutputError`, `BadRRCrtcError` and `BadRRModeError` inherit from `XError`. Receiving one raised `AttributeError: 'BadRRModeError' object has no attribute 'sequence_number'` instead of the error ([python-xlib/python-xlib#242](https://github.com/python-xlib/python-xlib/pull/242), thanks [@fransklaver][fransklaver]).
 
+Misc
+----
+
+- The HTML documentation builds with `makeinfo --html` instead of `texi2html`, which GNU Texinfo 5 replaced in 2013. `make -C doc html` writes `index.html` itself, and no longer `python-xlib_toc.html`.
+
 ---
 
 Version 1.0
