@@ -352,3 +352,23 @@ jobs:
         with:
           name: coverage-html-py${{ matrix.python-version }}-${{ matrix.platform }}
           path: htmlcov/
+
+  # Runs the tests the way Debian does, so they can package this fork as python-xlib.
+  # A failure there can get the package removed from testing, like https://bugs.debian.org/1006033 .
+  # Both packages are `Architecture: all`, so one runner covers every architecture.
+  test-debian:
+    name: Debian package (sid)
+    needs: changes
+    if: ${{ needs.changes.outputs.skip != 'true' }}
+    runs-on: *ubuntu-latest-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build and test the Debian package
+        run: |
+          docker run --rm \
+            --volume "$GITHUB_WORKSPACE:/src:ro" \
+            debian:sid \
+            sh /src/.github/scripts/debian-tests.sh /src
