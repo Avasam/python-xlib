@@ -3,6 +3,7 @@ from collections.abc import Sequence
 from typing_extensions import Final, TypeAlias
 
 from Xlib.display import Display
+from Xlib.error import XError
 from Xlib.protocol import request, rq
 from Xlib.xobject import drawable, resource
 
@@ -62,9 +63,9 @@ BadRROutput: Final = 0
 BadRRCrtc: Final = 1
 BadRRMode: Final = 2
 
-class BadRROutputError(Exception): ...
-class BadRRCrtcError(Exception): ...
-class BadRRModeError(Exception): ...
+class BadRROutputError(XError): ...
+class BadRRCrtcError(XError): ...
+class BadRRModeError(XError): ...
 
 RandR_ScreenSizes: rq.Struct
 RandR_ModeInfo: rq.Struct

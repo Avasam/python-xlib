@@ -3,6 +3,11 @@ NEWS for Python X Library
 Unreleased
 ==========
 
+Extensions
+----------
+
+- RandR: `BadRROutputError`, `BadRRCrtcError` and `BadRRModeError` inherit from `XError`. Receiving one raised `AttributeError: 'BadRRModeError' object has no attribute 'sequence_number'` instead of the error ([python-xlib/python-xlib#242](https://github.com/python-xlib/python-xlib/pull/242), thanks [@fransklaver][fransklaver]).
+
 ---
 
 Version 1.0
@@ -840,6 +845,7 @@ The ChangeLog hadn't been maintained since 2002, but some of the more significan
 [brianschubert]: https://github.com/brianschubert
 [CristiFati]: https://github.com/CristiFati
 [dd4e]: https://github.com/dd4e
+[fransklaver]: https://github.com/fransklaver
 [Gerardwx]: https://github.com/Gerardwx
 [hauntsaninja]: https://github.com/hauntsaninja
 [i2y]: https://github.com/i2y
